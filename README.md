@@ -13,7 +13,6 @@
   <p>Because my girlfriend wanted to copy text for her flashcards...</p>
   <p><strong>Copy text from anywhere on your Mac with one shortcut.</strong></p>
   <p>Select an area of your screen. Word Snip recognizes the text with Apple Vision and copies it to your clipboard.</p>
-  <p>Because my girlfriend asked for it so that she could make flashcards...introducing Word Snip!</p>
 </div>
 
 ## Capture text from your screen

@@ -3,8 +3,6 @@
 
   <h1>Word Snip</h1>
 
-  <hr>
-
   <p>
     <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.2.0"><img alt="Release v1.2.0" src="https://img.shields.io/badge/release-v1.2.0-2f6feb"></a>
     <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.2.0/Word-Snip-v1.2-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
@@ -12,6 +10,7 @@
     <img alt="Apple silicon and Intel" src="https://img.shields.io/badge/Macs-Apple%20silicon%20%2B%20Intel-555555">
   </p>
 
+  <p>Because my girlfriend wanted to copy text for her flashcards...</p>
   <p><strong>Copy text from anywhere on your Mac with one shortcut.</strong></p>
   <p>Select an area of your screen. Word Snip recognizes the text with Apple Vision and copies it to your clipboard.</p>
   <p>Because my girlfriend asked for it so that she could make flashcards...introducing Word Snip!</p>

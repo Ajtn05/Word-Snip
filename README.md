@@ -15,6 +15,12 @@
   <p>Select an area of your screen. Word Snip recognizes the text with Apple Vision and copies it to your clipboard.</p>
 </div>
 
+## Demo
+
+[![Word Snip selecting text from a book page and pasting the recognized text into a note](assets/word-snip-demo.gif)](assets/word-snip-demo.mp4)
+
+[Watch the full demo](assets/word-snip-demo.mp4).
+
 ## Capture text from your screen
 
 1. Press **⌃⇧2** or your chosen shortcut.
@@ -22,6 +28,8 @@
 3. Paste the recognized text anywhere. Press **Esc** to cancel a selection.
 
 Word Snip can launch at login and has an optional menu bar icon. **⌃⌥,** opens Settings even when the icon is hidden.
+
+To set your own capture shortcut, open Settings, click the current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app is already using that combination, Word Snip keeps your previous shortcut.
 
 ## Download
 

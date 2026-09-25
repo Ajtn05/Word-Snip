@@ -1,36 +1,85 @@
 import AppKit
 import Carbon.HIToolbox
 
-enum CaptureShortcut: Int, CaseIterable, Identifiable {
-    case controlShift2 = 0
-    case controlShift3
-    case controlOptionS
-    case commandShift2
+struct CaptureShortcut: Codable, Equatable {
+    let keyCode: UInt32
+    let modifiers: UInt32
+    let key: String
 
-    var id: Int { rawValue }
+    static let `default` = CaptureShortcut(keyCode: UInt32(kVK_ANSI_2),
+                                           modifiers: UInt32(controlKey | shiftKey), key: "2")
+
+    static func legacyPreset(_ value: Int) -> CaptureShortcut? {
+        switch value {
+        case 0: .default
+        case 1: CaptureShortcut(keyCode: UInt32(kVK_ANSI_3), modifiers: UInt32(controlKey | shiftKey), key: "3")
+        case 2: CaptureShortcut(keyCode: UInt32(kVK_ANSI_S), modifiers: UInt32(controlKey | optionKey), key: "S")
+        case 3: CaptureShortcut(keyCode: UInt32(kVK_ANSI_2), modifiers: UInt32(cmdKey | shiftKey), key: "2")
+        default: nil
+        }
+    }
+
+    init(keyCode: UInt32, modifiers: UInt32, key: String) {
+        self.keyCode = keyCode
+        self.modifiers = modifiers
+        self.key = key
+    }
+
+    init?(event: NSEvent) {
+        let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        var modifiers: UInt32 = 0
+        if flags.contains(.control) { modifiers |= UInt32(controlKey) }
+        if flags.contains(.option) { modifiers |= UInt32(optionKey) }
+        if flags.contains(.shift) { modifiers |= UInt32(shiftKey) }
+        if flags.contains(.command) { modifiers |= UInt32(cmdKey) }
+        guard modifiers & UInt32(controlKey | optionKey | cmdKey) != 0,
+              let key = Self.keyLabel(for: event) else { return nil }
+        self.init(keyCode: UInt32(event.keyCode), modifiers: modifiers, key: key)
+    }
 
     var title: String {
-        switch self {
-        case .controlShift2: "⌃⇧2"
-        case .controlShift3: "⌃⇧3"
-        case .controlOptionS: "⌃⌥S"
-        case .commandShift2: "⌘⇧2"
-        }
+        var title = ""
+        if modifiers & UInt32(controlKey) != 0 { title += "⌃" }
+        if modifiers & UInt32(optionKey) != 0 { title += "⌥" }
+        if modifiers & UInt32(shiftKey) != 0 { title += "⇧" }
+        if modifiers & UInt32(cmdKey) != 0 { title += "⌘" }
+        return title + key
     }
 
-    var keyCode: UInt32 {
-        switch self {
-        case .controlShift2, .commandShift2: UInt32(kVK_ANSI_2)
-        case .controlShift3: UInt32(kVK_ANSI_3)
-        case .controlOptionS: UInt32(kVK_ANSI_S)
-        }
+    var isSettingsShortcut: Bool {
+        keyCode == UInt32(kVK_ANSI_Comma) && modifiers == UInt32(controlKey | optionKey)
     }
 
-    var modifiers: UInt32 {
-        switch self {
-        case .controlShift2, .controlShift3: UInt32(controlKey | shiftKey)
-        case .controlOptionS: UInt32(controlKey | optionKey)
-        case .commandShift2: UInt32(cmdKey | shiftKey)
+    private static func keyLabel(for event: NSEvent) -> String? {
+        switch Int(event.keyCode) {
+        case kVK_Space: return "Space"
+        case kVK_Return: return "Return"
+        case kVK_Tab: return "Tab"
+        case kVK_Delete: return "Delete"
+        case kVK_ForwardDelete: return "Forward Delete"
+        case kVK_LeftArrow: return "←"
+        case kVK_RightArrow: return "→"
+        case kVK_UpArrow: return "↑"
+        case kVK_DownArrow: return "↓"
+        case kVK_F1: return "F1"
+        case kVK_F2: return "F2"
+        case kVK_F3: return "F3"
+        case kVK_F4: return "F4"
+        case kVK_F5: return "F5"
+        case kVK_F6: return "F6"
+        case kVK_F7: return "F7"
+        case kVK_F8: return "F8"
+        case kVK_F9: return "F9"
+        case kVK_F10: return "F10"
+        case kVK_F11: return "F11"
+        case kVK_F12: return "F12"
+        default:
+            guard let characters = event.charactersIgnoringModifiers,
+                  characters.unicodeScalars.count == 1,
+                  let scalar = characters.unicodeScalars.first,
+                  !CharacterSet.controlCharacters.contains(scalar),
+                  !CharacterSet.whitespacesAndNewlines.contains(scalar) else { return nil }
+            return characters.uppercased()
         }
     }
 }
@@ -73,6 +122,8 @@ final class ShortcutManager {
 
     @discardableResult
     func registerCapture(_ shortcut: CaptureShortcut) -> Bool {
+        guard !shortcut.isSettingsShortcut else { return false }
+        if shortcut == currentShortcut, captureHotKey != nil { return true }
         let previous = currentShortcut
         if let captureHotKey { UnregisterEventHotKey(captureHotKey) }
         captureHotKey = nil
@@ -80,7 +131,8 @@ final class ShortcutManager {
             currentShortcut = shortcut
             return true
         }
-        if let previous { _ = installCapture(previous) }
+        if let previous, installCapture(previous) { currentShortcut = previous }
+        else { currentShortcut = nil }
         return false
     }
 

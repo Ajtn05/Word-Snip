@@ -10,9 +10,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     private var overlay: SelectionOverlay?
     private var isCapturing = false
+    private var isRecordingShortcut = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        shortcutManager.onCapture = { [weak self] in self?.startCapture() }
+        shortcutManager.onCapture = { [weak self] in
+            guard let self, !self.isRecordingShortcut else { return }
+            self.startCapture()
+        }
         shortcutManager.onSettings = { [weak self] in self?.showSettings() }
         settingsModel.onShortcutChange = { [weak self] shortcut in
             self?.shortcutManager.registerCapture(shortcut) ?? false
@@ -62,13 +66,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if settingsWindow == nil {
             let hosting = NSHostingView(rootView: SettingsView(model: settingsModel, onCapture: { [weak self] in
+                self?.isRecordingShortcut = false
                 self?.settingsWindow?.orderOut(nil)
                 self?.startCapture()
+            }, onRecordingChange: { [weak self] recording in
+                self?.isRecordingShortcut = recording
             }))
-            let window = NSWindow(contentRect: CGRect(x: 0, y: 0, width: 460, height: 340),
-                                  styleMask: [.titled, .closable, .miniaturizable],
+            let window = NSWindow(contentRect: CGRect(origin: .zero, size: SettingsView.windowSize),
+                                  styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
                                   backing: .buffered, defer: false)
             window.title = "Word Snip Settings"
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
+            window.titlebarSeparatorStyle = .none
+            window.isMovableByWindowBackground = true
             window.contentView = hosting
             window.center()
             window.isReleasedWhenClosed = false

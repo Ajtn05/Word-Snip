@@ -77,10 +77,14 @@ private final class SelectionView: NSView {
             outline.stroke()
         } else {
             let instruction = "Drag to select text  •  Esc to cancel"
+            let glow = NSShadow()
+            glow.shadowColor = NSColor.black.withAlphaComponent(0.95)
+            glow.shadowBlurRadius = 14
+            glow.shadowOffset = .zero
             let attributes: [NSAttributedString.Key: Any] = [
                 .font: NSFont.systemFont(ofSize: 15, weight: .medium),
                 .foregroundColor: NSColor.white,
-                .backgroundColor: NSColor.black.withAlphaComponent(0.65)
+                .shadow: glow
             ]
             let text = NSAttributedString(string: instruction, attributes: attributes)
             let size = text.size()

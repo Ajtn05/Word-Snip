@@ -11,7 +11,7 @@ xcodegen generate
 xcodebuild -project WordSnip.xcodeproj -scheme WordSnip -configuration Release -destination 'generic/platform=macOS' ARCHS='arm64 x86_64' ONLY_ACTIVE_ARCH=NO build
 ```
 
-Open `WordSnip.xcodeproj` in Xcode to run or archive the app. Move a built app to `/Applications` before enabling **Launch at login**, so the login item points to a stable location. For distribution to another Mac, configure Developer ID signing and notarization in Xcode. For development, use an Apple Development signing identity; ad hoc signatures change on every build, which can invalidate Screen Recording permission.
+Open `WordSnip.xcodeproj` in Xcode to run or archive the app. Move a built app to `/Applications` before enabling **Launch at login**, so the login item points to a stable location. This project uses the local Apple Development signing identity so Screen Recording permission persists across builds. If you build on another Mac, select its development team and signing identity in Xcode. For distribution to another Mac, configure Developer ID signing and notarization.
 
 ## Use
 

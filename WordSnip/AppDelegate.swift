@@ -101,7 +101,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     let text = try await TextCapture.recognize(screen: screen, selection: selection)
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(text, forType: .string)
-                    self.showFeedback("Copied text to clipboard")
+                    self.showFeedback(on: screen)
                 } catch {
                     self.showError(error.localizedDescription)
                 }
@@ -140,30 +140,62 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         alert.runModal()
     }
 
-    private func showFeedback(_ message: String) {
-        let label = NSTextField(labelWithString: message)
-        label.font = .systemFont(ofSize: 13, weight: .medium)
-        label.textColor = .white
-        label.alignment = .center
-        let panel = NSPanel(contentRect: CGRect(x: 0, y: 0, width: 250, height: 38),
+    private func showFeedback(on screen: NSScreen) {
+        let size = CGSize(width: 232, height: 60)
+        let panel = NSPanel(contentRect: CGRect(origin: .zero, size: size),
                             styleMask: [.borderless], backing: .buffered, defer: false)
-        panel.contentView = NSVisualEffectView(frame: panel.contentRect(forFrameRect: panel.frame))
-        panel.contentView?.wantsLayer = true
-        panel.contentView?.layer?.backgroundColor = NSColor.black.withAlphaComponent(0.8).cgColor
-        panel.contentView?.layer?.cornerRadius = 10
-        label.frame = CGRect(x: 8, y: 7, width: 234, height: 24)
-        panel.contentView?.addSubview(label)
+        let background = NSVisualEffectView(frame: CGRect(origin: .zero, size: size))
+        background.material = .hudWindow
+        background.blendingMode = .behindWindow
+        background.state = .active
+        background.wantsLayer = true
+        background.layer?.cornerRadius = 16
+        background.layer?.masksToBounds = true
+        background.layer?.borderWidth = 1
+        background.layer?.borderColor = NSColor.white.withAlphaComponent(0.16).cgColor
+
+        if let image = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Copied") {
+            let icon = NSImageView(image: image)
+            icon.frame = CGRect(x: 17, y: 17, width: 26, height: 26)
+            icon.contentTintColor = .systemGreen
+            background.addSubview(icon)
+        }
+
+        let title = NSTextField(labelWithString: "Text copied")
+        title.font = .systemFont(ofSize: 14, weight: .semibold)
+        title.textColor = .white
+        title.frame = CGRect(x: 54, y: 30, width: 164, height: 19)
+        background.addSubview(title)
+
+        let detail = NSTextField(labelWithString: "Ready to paste")
+        detail.font = .systemFont(ofSize: 11)
+        detail.textColor = NSColor.white.withAlphaComponent(0.72)
+        detail.frame = CGRect(x: 54, y: 14, width: 164, height: 15)
+        background.addSubview(detail)
+
+        panel.contentView = background
         panel.isOpaque = false
         panel.backgroundColor = .clear
+        panel.hasShadow = true
+        panel.ignoresMouseEvents = true
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .transient]
-        if let screen = NSScreen.main {
-            panel.setFrameOrigin(CGPoint(x: screen.frame.midX - 125, y: screen.visibleFrame.maxY - 70))
-        }
+        panel.setFrameOrigin(CGPoint(x: screen.visibleFrame.midX - size.width / 2,
+                                   y: screen.visibleFrame.maxY - size.height - 24))
+        panel.alphaValue = 0
         panel.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.18
+            panel.animator().alphaValue = 1
+        }
         Task { @MainActor in
-            try? await Task.sleep(for: .seconds(1.5))
-            panel.orderOut(nil)
+            try? await Task.sleep(for: .seconds(1.6))
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.22
+                panel.animator().alphaValue = 0
+            } completionHandler: {
+                panel.orderOut(nil)
+            }
         }
     }
 }

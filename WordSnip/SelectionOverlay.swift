@@ -17,6 +17,7 @@ final class SelectionOverlay {
             window.backgroundColor = .clear
             window.hasShadow = false
             window.ignoresMouseEvents = false
+            window.acceptsMouseMovedEvents = true
             let view = SelectionView(frame: CGRect(origin: .zero, size: screen.frame.size))
             view.onSelection = { [weak self, weak window] rect in
                 guard let self, let window, !self.finished else { return }
@@ -32,6 +33,8 @@ final class SelectionOverlay {
                 self.onCancel?()
             }
             window.contentView = view
+            let mousePoint = view.convert(window.convertPoint(fromScreen: NSEvent.mouseLocation), from: nil)
+            if view.bounds.contains(mousePoint) { view.pointerLocation = mousePoint }
             windows.append(window)
             window.orderFrontRegardless()
         }
@@ -58,38 +61,80 @@ private final class SelectionWindow: NSPanel {
 private final class SelectionView: NSView {
     var onSelection: ((CGRect) -> Void)?
     var onCancel: (() -> Void)?
+    var pointerLocation: CGPoint? {
+        didSet {
+            if let oldValue { setNeedsDisplay(hintRect(near: oldValue).insetBy(dx: -2, dy: -2)) }
+            if let pointerLocation { setNeedsDisplay(hintRect(near: pointerLocation).insetBy(dx: -2, dy: -2)) }
+        }
+    }
     private var startPoint: CGPoint?
     private var currentPoint: CGPoint?
+    private var pointerTrackingArea: NSTrackingArea?
+    private let hintText = NSAttributedString(string: "Drag to select text  ·  Esc to cancel", attributes: [
+        .font: NSFont.systemFont(ofSize: 12, weight: .medium),
+        .foregroundColor: NSColor.white
+    ])
 
     override var acceptsFirstResponder: Bool { true }
 
-    override func draw(_ dirtyRect: NSRect) {
-        NSColor.black.withAlphaComponent(0.30).setFill()
-        bounds.fill()
+    override func resetCursorRects() {
+        addCursorRect(bounds, cursor: .crosshair)
+    }
 
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        if let pointerTrackingArea { removeTrackingArea(pointerTrackingArea) }
+        let area = NSTrackingArea(rect: bounds, options: [.mouseMoved, .mouseEnteredAndExited, .activeAlways, .inVisibleRect], owner: self)
+        addTrackingArea(area)
+        pointerTrackingArea = area
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
         if let selection = selectionRect, selection.width > 0, selection.height > 0 {
-            NSGraphicsContext.current?.compositingOperation = .clear
+            NSColor.controlAccentColor.withAlphaComponent(0.10).setFill()
             selection.fill()
-            NSGraphicsContext.current?.compositingOperation = .sourceOver
+            NSColor.black.withAlphaComponent(0.55).setStroke()
+            let contrastOutline = NSBezierPath(rect: selection.insetBy(dx: 0.5, dy: 0.5))
+            contrastOutline.lineWidth = 3
+            contrastOutline.stroke()
             NSColor.white.setStroke()
             let outline = NSBezierPath(rect: selection.insetBy(dx: 0.5, dy: 0.5))
             outline.lineWidth = 1
             outline.stroke()
-        } else {
-            let instruction = "Drag to select text  •  Esc to cancel"
-            let glow = NSShadow()
-            glow.shadowColor = NSColor.black.withAlphaComponent(0.95)
-            glow.shadowBlurRadius = 14
-            glow.shadowOffset = .zero
-            let attributes: [NSAttributedString.Key: Any] = [
-                .font: NSFont.systemFont(ofSize: 15, weight: .medium),
-                .foregroundColor: NSColor.white,
-                .shadow: glow
-            ]
-            let text = NSAttributedString(string: instruction, attributes: attributes)
-            let size = text.size()
-            text.draw(at: CGPoint(x: (bounds.width - size.width) / 2, y: bounds.midY + 20))
         }
+        if startPoint == nil, let pointerLocation { drawHint(near: pointerLocation) }
+    }
+
+    private func drawHint(near point: CGPoint) {
+        let pillRect = hintRect(near: point)
+        let pill = NSBezierPath(roundedRect: pillRect, xRadius: 8, yRadius: 8)
+        NSColor.black.withAlphaComponent(0.82).setFill()
+        pill.fill()
+        NSColor.white.withAlphaComponent(0.20).setStroke()
+        pill.lineWidth = 1
+        pill.stroke()
+        hintText.draw(at: CGPoint(x: pillRect.minX + 10, y: pillRect.minY + (pillRect.height - hintText.size().height) / 2))
+    }
+
+    private func hintRect(near point: CGPoint) -> CGRect {
+        let width = hintText.size().width + 20
+        let height: CGFloat = 28
+        let preferredX = point.x + 18 + width + 12 <= bounds.maxX ? point.x + 18 : point.x - width - 18
+        let x = min(max(12, preferredX), max(12, bounds.maxX - width - 12))
+        let y = point.y >= height + 22 ? point.y - height - 14 : point.y + 18
+        return CGRect(x: x, y: y, width: width, height: height)
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        pointerLocation = convert(event.locationInWindow, from: nil)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        pointerLocation = nil
+    }
+
+    override func mouseMoved(with event: NSEvent) {
+        pointerLocation = convert(event.locationInWindow, from: nil)
     }
 
     override func mouseDown(with event: NSEvent) {
@@ -108,6 +153,7 @@ private final class SelectionView: NSView {
         guard let rect = selectionRect, rect.width >= 4, rect.height >= 4 else {
             startPoint = nil
             currentPoint = nil
+            pointerLocation = convert(event.locationInWindow, from: nil)
             needsDisplay = true
             return
         }

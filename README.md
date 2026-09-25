@@ -1,5 +1,7 @@
 # Word Snip
 
+Because my girlfriend asked for it so that she could make flashcards...introducing Word Snip!
+
 A native macOS menu bar app that copies text from a selected screen area using Apple Vision OCR.
 
 ## Build

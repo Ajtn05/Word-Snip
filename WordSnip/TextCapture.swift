@@ -18,7 +18,7 @@ enum CaptureError: LocalizedError {
 }
 
 enum TextCapture {
-    static func recognize(screen: NSScreen, selection: CGRect) async throws -> String {
+    static func recognize(screen: NSScreen, selection: CGRect, singleLine: Bool) async throws -> String {
         guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
             throw CaptureError.displayUnavailable
         }
@@ -54,7 +54,10 @@ enum TextCapture {
         request.usesLanguageCorrection = true
         try VNImageRequestHandler(cgImage: image).perform([request])
         let lines = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
-        let text = lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        let recognized = lines.joined(separator: "\n")
+        let text = singleLine
+            ? recognized.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+            : recognized.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw CaptureError.noText }
         return text
     }

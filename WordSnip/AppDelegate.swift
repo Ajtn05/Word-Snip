@@ -109,7 +109,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // Let WindowServer remove the selection overlay before taking the screenshot.
                 try? await Task.sleep(for: .milliseconds(180))
                 do {
-                    let text = try await TextCapture.recognize(screen: screen, selection: selection)
+                    let text = try await TextCapture.recognize(
+                        screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText
+                    )
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(text, forType: .string)
                     self.showFeedback(on: screen)

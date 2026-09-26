@@ -29,6 +29,8 @@
 
 Word Snip can launch at login and has an optional menu bar icon. **⌃⌥,** opens Settings even when the icon is hidden.
 
+In Settings, turn on **Single-line text** to copy OCR results as one continuous line. It replaces line breaks and repeated whitespace with single spaces, making the text easier to paste into a document.
+
 To set your own capture shortcut, open Settings, click the current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app is already using that combination, Word Snip keeps your previous shortcut.
 
 ## Download
@@ -45,10 +47,12 @@ Requires macOS 14 or newer, Xcode, and [XcodeGen](https://github.com/yonaskolb/X
 
 ```sh
 xcodegen generate
-xcodebuild -project WordSnip.xcodeproj -scheme WordSnip -configuration Release -destination 'generic/platform=macOS' ARCHS='arm64 x86_64' ONLY_ACTIVE_ARCH=NO build
+xcodebuild -project WordSnip.xcodeproj -scheme WordSnip -configuration Release -destination 'generic/platform=macOS' -derivedDataPath build/DerivedData ARCHS='arm64 x86_64' ONLY_ACTIVE_ARCH=NO build
 ```
 
 Open `WordSnip.xcodeproj` in Xcode to run or archive the app. Move a built app to `/Applications` before enabling **Launch at login**, so the login item points to a stable location. Consistent signing lets Screen Recording permission persist across builds. Distribution to other Macs with normal Gatekeeper approval requires Developer ID signing and notarization.
+
+For local updates, install the signed Release app from `build/DerivedData/Build/Products/Release/Word Snip.app` in `/Applications`. An unsigned Debug build can lose Screen Recording access after it is rebuilt. After replacing an unsigned copy, grant access to the signed app in **System Settings → Privacy & Security → Screen & System Audio Recording**, then quit and reopen Word Snip.
 
 ## Screen Recording permission
 

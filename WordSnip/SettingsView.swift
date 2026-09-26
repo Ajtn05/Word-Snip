@@ -6,6 +6,7 @@ import SwiftUI
 final class SettingsModel: ObservableObject {
     @Published var shortcut: CaptureShortcut
     @Published var showMenuBarIcon: Bool
+    @Published var singleLineText: Bool
     @Published var launchAtLogin: Bool
     @Published var message: String?
     @Published var isRecordingShortcut = false
@@ -24,6 +25,7 @@ final class SettingsModel: ObservableObject {
             shortcut = .default
         }
         showMenuBarIcon = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
+        singleLineText = UserDefaults.standard.bool(forKey: "singleLineText")
         launchAtLogin = SMAppService.mainApp.status == .enabled
     }
 
@@ -58,6 +60,11 @@ final class SettingsModel: ObservableObject {
         onMenuBarChange?(value)
     }
 
+    func setSingleLineText(_ value: Bool) {
+        singleLineText = value
+        UserDefaults.standard.set(value, forKey: "singleLineText")
+    }
+
     func setLaunchAtLogin(_ value: Bool) {
         do {
             if value { try SMAppService.mainApp.register() }
@@ -72,7 +79,7 @@ final class SettingsModel: ObservableObject {
 }
 
 struct SettingsView: View {
-    static let windowSize = CGSize(width: 540, height: 600)
+    static let windowSize = CGSize(width: 540, height: 670)
 
     @ObservedObject var model: SettingsModel
     var onCapture: () -> Void
@@ -149,6 +156,25 @@ struct SettingsView: View {
                 VStack(alignment: .leading, spacing: 9) {
                     sectionLabel("PREFERENCES")
                     VStack(spacing: 0) {
+                        HStack(spacing: 13) {
+                            settingIcon("text.alignleft", color: .green)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Single-line text").font(SettingsFont.demi(14))
+                                Text("Join lines and replace extra spaces with one space")
+                                    .font(SettingsFont.regular(11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Toggle("Single-line text", isOn: Binding(
+                                get: { model.singleLineText },
+                                set: { model.setSingleLineText($0) }
+                            ))
+                            .labelsHidden()
+                        }
+                        .padding(15)
+
+                        Divider().padding(.leading, 56)
+
                         HStack(spacing: 13) {
                             settingIcon("menubar.rectangle", color: .purple)
                             VStack(alignment: .leading, spacing: 3) {

@@ -3,6 +3,7 @@
 
   <h1>Word Snip</h1>
 
+  <p>because my girlfriend asked for it...</p>
   <p>
     <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.4.0"><img alt="Release v1.4.0" src="https://img.shields.io/badge/release-v1.4.0-2f6feb"></a>
     <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.4.0/Word-Snip-v1.4-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>

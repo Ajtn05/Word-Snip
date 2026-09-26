@@ -1,9 +1,13 @@
 import AppKit
 import CoreGraphics
+import OSLog
 import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+#if DEBUG
+    private let captureLog = Logger(subsystem: "com.aldrinnellas.wordsnip.testing", category: "Capture")
+#endif
     private let settingsModel = SettingsModel()
     private let shortcutManager = ShortcutManager()
     private var statusItem: NSStatusItem?
@@ -15,18 +19,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         shortcutManager.onCapture = { [weak self] in
             guard let self, !self.isRecordingShortcut else { return }
-            self.startCapture()
+            self.startCapture(mode: .rectangle)
+        }
+        shortcutManager.onFreehandCapture = { [weak self] in
+            guard let self, !self.isRecordingShortcut else { return }
+            self.startCapture(mode: .freehand)
         }
         shortcutManager.onSettings = { [weak self] in self?.showSettings() }
         settingsModel.onShortcutChange = { [weak self] shortcut in
             self?.shortcutManager.registerCapture(shortcut) ?? false
         }
+        settingsModel.onFreehandShortcutChange = { [weak self] shortcut in
+            self?.shortcutManager.registerFreehand(shortcut) ?? false
+        }
         settingsModel.onMenuBarChange = { [weak self] visible in
             self?.configureStatusItem(visible: visible)
         }
         configureStatusItem(visible: settingsModel.showMenuBarIcon)
-        if !shortcutManager.registerCapture(settingsModel.shortcut) {
-            settingsModel.message = "The chosen capture shortcut is unavailable. Choose another."
+        let rectangleRegistered = shortcutManager.registerCapture(settingsModel.shortcut)
+        let freehandRegistered = shortcutManager.registerFreehand(settingsModel.freehandShortcut)
+        if !rectangleRegistered || !freehandRegistered {
+            settingsModel.message = "A capture shortcut is unavailable. Choose another combination."
             showSettings()
         } else if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
             UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
@@ -45,7 +58,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.button?.image = NSImage(systemSymbolName: "text.viewfinder", accessibilityDescription: "Word Snip")
         item.button?.toolTip = "Word Snip"
         let menu = NSMenu()
-        menu.addItem(withTitle: "Capture Text", action: #selector(captureFromMenu), keyEquivalent: "")
+        menu.addItem(withTitle: "Capture Rectangle", action: #selector(captureFromMenu), keyEquivalent: "")
+        menu.addItem(withTitle: "Capture Freehand", action: #selector(freehandFromMenu), keyEquivalent: "")
         menu.addItem(withTitle: "Settings…", action: #selector(settingsFromMenu), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Word Snip", action: #selector(quitFromMenu), keyEquivalent: "")
@@ -54,7 +68,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = item
     }
 
-    @objc private func captureFromMenu() { startCapture() }
+    @objc private func captureFromMenu() { scheduleCaptureFromUI(mode: .rectangle) }
+    @objc private func freehandFromMenu() { scheduleCaptureFromUI(mode: .freehand) }
     @objc private func settingsFromMenu() { showSettings() }
     @objc private func quitFromMenu() { NSApp.terminate(nil) }
 
@@ -66,9 +81,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if settingsWindow == nil {
             let hosting = NSHostingView(rootView: SettingsView(model: settingsModel, onCapture: { [weak self] in
-                self?.isRecordingShortcut = false
-                self?.settingsWindow?.orderOut(nil)
-                self?.startCapture()
+                self?.captureFromSettings(mode: .rectangle)
+            }, onFreehandCapture: { [weak self] in
+                self?.captureFromSettings(mode: .freehand)
             }, onRecordingChange: { [weak self] recording in
                 self?.isRecordingShortcut = recording
             }))
@@ -89,33 +104,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
 
-    private func startCapture() {
+    private func captureFromSettings(mode: SelectionMode) {
+        isRecordingShortcut = false
+        scheduleCaptureFromUI(mode: mode)
+    }
+
+    private func scheduleCaptureFromUI(mode: SelectionMode) {
+        // Let the button or menu finish tracking its mouse click before opening a full-screen panel.
+        DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(150)) { [weak self] in
+            self?.startCapture(mode: mode)
+        }
+    }
+
+    private func startCapture(mode: SelectionMode) {
+        if let overlay {
+#if DEBUG
+            captureLog.notice("Replacing an unfinished selection")
+#endif
+            overlay.close()
+            self.overlay = nil
+            isCapturing = false
+        }
         guard !isCapturing else { return }
+#if DEBUG
+        captureLog.notice("Capture started: \(String(describing: mode))")
+#endif
         guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
             showPermissionAlert()
             return
         }
         isCapturing = true
         settingsWindow?.orderOut(nil)
-        let overlay = SelectionOverlay()
+        let overlay = SelectionOverlay(mode: mode)
         overlay.onCancel = { [weak self] in
+#if DEBUG
+            self?.captureLog.notice("Selection cancelled")
+#endif
             self?.overlay = nil
             self?.isCapturing = false
         }
         overlay.onSelection = { [weak self] screen, selection in
             guard let self else { return }
+#if DEBUG
+            self.captureLog.notice("Selection completed")
+#endif
             self.overlay = nil
             Task {
                 // Let WindowServer remove the selection overlay before taking the screenshot.
                 try? await Task.sleep(for: .milliseconds(180))
                 do {
+#if DEBUG
+                    self.captureLog.notice("Recognizing text")
+#endif
                     let text = try await TextCapture.recognize(
                         screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText
                     )
                     NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(text, forType: .string)
+                    guard NSPasteboard.general.setString(text, forType: .string) else {
+                        throw CaptureError.clipboardUnavailable
+                    }
+#if DEBUG
+                    self.captureLog.notice("Copied \(text.count) characters")
+#endif
                     self.showFeedback(on: screen)
                 } catch {
+#if DEBUG
+                    self.captureLog.error("Capture failed: \(error.localizedDescription)")
+#endif
                     self.showError(error.localizedDescription)
                 }
                 self.isCapturing = false
@@ -123,6 +178,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         self.overlay = overlay
         overlay.show()
+#if DEBUG
+        captureLog.notice("Overlay opened; app active: \(NSApp.isActive), selection window key: \(overlay.hasKeyWindow)")
+#endif
     }
 
     private func showPermissionAlert() {

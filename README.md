@@ -11,7 +11,7 @@
   </p>
 
   <p>Because my girlfriend wanted to copy text for her flashcards...</p>
-  <p><strong>Copy text from anywhere on your Mac with one shortcut.</strong></p>
+  <p><strong>Copy text from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
   <p>Select an area of your screen. Word Snip recognizes the text with Apple Vision and copies it to your clipboard.</p>
 </div>
 
@@ -23,37 +23,41 @@
 
 ## Capture text from your screen
 
-1. Press **⌃⇧2** or your chosen shortcut.
-2. Drag a rectangle around the text you want.
+1. Press **⌃⇧2** to select a rectangle, or **⌃⇧3** to draw a freehand outline. You can change either shortcut in Settings.
+2. Drag around the text you want. The freehand outline closes when you release the mouse; text outside it is excluded.
 3. Paste the recognized text anywhere. Press **Esc** to cancel a selection.
 
-Word Snip can launch at login and has an optional menu bar icon. **⌃⌥,** opens Settings even when the icon is hidden.
+Word Snip can launch at login and has an optional menu bar icon. Its menu includes both capture modes. **⌃⌥,** opens Settings even when the icon is hidden.
 
 In Settings, turn on **Single-line text** to copy OCR results as one continuous line. It replaces line breaks and repeated whitespace with single spaces, making the text easier to paste into a document.
 
-To set your own capture shortcut, open Settings, click the current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app is already using that combination, Word Snip keeps your previous shortcut.
+To set either capture shortcut, open Settings, click its current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app or the other capture mode already uses that combination, Word Snip keeps your previous shortcut.
 
 ## Download
 
 [Download Word Snip 1.3 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.3.0/Word-Snip-v1.3-macOS.zip), unzip it, and move `Word Snip.app` to `/Applications` before opening it. The app supports Apple silicon and Intel Macs running macOS 14 or newer.
 
+The 1.3 download predates freehand selection. Build the current source to use it until a new release is published.
+
 **This build is development signed and not notarized.** macOS may block its first launch. If you trust the download, try opening the app, then go to **System Settings → Privacy & Security → Open Anyway**. The signing certificate includes the developer's email address.
 
 When prompted, grant **Screen & System Audio Recording** access. Fully quit Word Snip and reopen it after granting access.
 
-## Build from source
+## Build and test from source
 
-Requires macOS 14 or newer, Xcode, and [XcodeGen](https://github.com/yonaskolb/XcodeGen). Before generating the project on another Mac, set `CODE_SIGN_IDENTITY` and `DEVELOPMENT_TEAM` in `project.yml` to your own Apple Development signing identity and team.
+Requires macOS 14 or newer, Xcode, and [XcodeGen](https://github.com/yonaskolb/XcodeGen). On another Mac, set `CODE_SIGN_IDENTITY` and `DEVELOPMENT_TEAM` in `project.yml` to your own Apple Development signing identity and team, and update the identity in `scripts/test-app.sh`.
 
 ```sh
 xcodegen generate
-xcodebuild -project WordSnip.xcodeproj -scheme WordSnip -configuration Release -destination 'generic/platform=macOS' -derivedDataPath build/DerivedData ARCHS='arm64 x86_64' ONLY_ACTIVE_ARCH=NO build
+./scripts/test-app.sh run
 ```
 
-Open `WordSnip.xcodeproj` in Xcode to run or archive the app. Move a built app to `/Applications` before enabling **Launch at login**, so the login item points to a stable location. Consistent signing lets Screen Recording permission persist across builds. Distribution to other Macs with normal Gatekeeper approval requires Developer ID signing and notarization.
+The script builds and runs the signed development copy at `build/testing/Word Snip Testing.app`. Its name and bundle identifier differ from the release app, so each has its own Screen Recording permission. The test app stays at that path across rebuilds; grant permission to **Word Snip Testing** once, then fully quit and reopen it. Use `./scripts/test-app.sh build` to build without launching, `check` to verify the bundle, or `stop` to close it.
 
-For local updates, install the signed Release app from `build/DerivedData/Build/Products/Release/Word Snip.app` in `/Applications`. An unsigned Debug build can lose Screen Recording access after it is rebuilt. After replacing an unsigned copy, grant access to the signed app in **System Settings → Privacy & Security → Screen & System Audio Recording**, then quit and reopen Word Snip.
+To test a capture, run the script, then use **⌃⇧2** for a rectangle and **⌃⇧3** for a freehand outline. Check that the copied text pastes correctly and that text outside the freehand outline is excluded. `check` validates the app bundle and signing; the capture check is manual.
+
+This workflow does not install or replace anything in `/Applications`. Prepare a release bundle only when a release is requested. Distribution to other Macs with normal Gatekeeper approval requires Developer ID signing and notarization.
 
 ## Screen Recording permission
 
-If macOS keeps asking for permission despite the switch being on, confirm that you launched the copy in `/Applications`, quit it, and reopened that same copy. Older Xcode and `dist` builds may appear under the same name in System Settings. Remove stale Word Snip entries there and grant access to the installed copy.
+For development, use only `build/testing/Word Snip Testing.app`. If macOS asks again after a rebuild, confirm that **Word Snip Testing** is enabled in **System Settings → Privacy & Security → Screen & System Audio Recording** and that the running process came from this path. Fully quit and reopen the test app after granting permission. The release app uses a separate permission entry.

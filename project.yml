@@ -19,7 +19,7 @@ targets:
     info:
       path: WordSnip/Info.plist
       properties:
-        CFBundleDisplayName: Word Snip
+        CFBundleDisplayName: $(PRODUCT_NAME)
         CFBundleShortVersionString: "1.3"
         CFBundleVersion: "3"
         LSUIElement: true

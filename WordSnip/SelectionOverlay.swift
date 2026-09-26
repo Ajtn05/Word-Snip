@@ -1,30 +1,69 @@
 import AppKit
+import OSLog
+
+enum SelectionMode {
+    case rectangle
+    case freehand
+}
+
+enum SelectionArea {
+    case rectangle(CGRect)
+    case freehand([CGPoint])
+
+    var bounds: CGRect {
+        switch self {
+        case .rectangle(let rect): return rect
+        case .freehand(let points):
+            guard let first = points.first else { return .null }
+            let xs = points.map(\.x)
+            let ys = points.map(\.y)
+            return CGRect(x: xs.min() ?? first.x, y: ys.min() ?? first.y,
+                          width: (xs.max() ?? first.x) - (xs.min() ?? first.x),
+                          height: (ys.max() ?? first.y) - (ys.min() ?? first.y))
+        }
+    }
+}
 
 @MainActor
 final class SelectionOverlay {
-    var onSelection: ((NSScreen, CGRect) -> Void)?
+    var onSelection: ((NSScreen, SelectionArea) -> Void)?
     var onCancel: (() -> Void)?
     private var windows: [NSWindow] = []
     private var finished = false
+    private let mode: SelectionMode
+    var hasKeyWindow: Bool { windows.contains(where: \.isKeyWindow) }
+
+    init(mode: SelectionMode) {
+        self.mode = mode
+    }
 
     func show() {
         finished = false
+        NSApp.activate(ignoringOtherApps: true)
         for screen in NSScreen.screens {
             let window = SelectionWindow(contentRect: screen.frame, styleMask: .borderless, backing: .buffered, defer: false, screen: screen)
-            window.level = .screenSaver
+            window.level = .floating
             window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
             window.isOpaque = false
             window.backgroundColor = .clear
             window.hasShadow = false
             window.ignoresMouseEvents = false
             window.acceptsMouseMovedEvents = true
-            let view = SelectionView(frame: CGRect(origin: .zero, size: screen.frame.size))
-            view.onSelection = { [weak self, weak window] rect in
+            let view = SelectionView(frame: CGRect(origin: .zero, size: screen.frame.size), mode: mode)
+            view.onSelection = { [weak self, weak window] area in
                 guard let self, let window, !self.finished else { return }
                 self.finished = true
-                let screenRect = window.convertToScreen(rect)
+                let screenArea: SelectionArea
+                switch area {
+                case .rectangle(let rect):
+                    screenArea = .rectangle(window.convertToScreen(rect))
+                case .freehand(let points):
+                    screenArea = .freehand(points.map {
+                        window.convertToScreen(CGRect(origin: $0, size: .zero)).origin
+                    })
+                }
                 self.close()
-                self.onSelection?(screen, screenRect)
+                self.onSelection?(screen, screenArea)
             }
             view.onCancel = { [weak self] in
                 guard let self, !self.finished else { return }
@@ -33,16 +72,19 @@ final class SelectionOverlay {
                 self.onCancel?()
             }
             window.contentView = view
+            window.makeFirstResponder(view)
             let mousePoint = view.convert(window.convertPoint(fromScreen: NSEvent.mouseLocation), from: nil)
             if view.bounds.contains(mousePoint) { view.pointerLocation = mousePoint }
+            view.needsDisplay = true
             windows.append(window)
             window.orderFrontRegardless()
         }
         if let first = windows.first {
-            NSApp.activate(ignoringOtherApps: true)
             first.makeKeyAndOrderFront(nil)
+            if let view = first.contentView { first.makeFirstResponder(view) }
         }
         NSCursor.crosshair.push()
+        NSCursor.crosshair.set()
     }
 
     func close() {
@@ -59,7 +101,10 @@ private final class SelectionWindow: NSPanel {
 }
 
 private final class SelectionView: NSView {
-    var onSelection: ((CGRect) -> Void)?
+#if DEBUG
+    private let captureLog = Logger(subsystem: "com.aldrinnellas.wordsnip.testing", category: "Capture")
+#endif
+    var onSelection: ((SelectionArea) -> Void)?
     var onCancel: (() -> Void)?
     var pointerLocation: CGPoint? {
         didSet {
@@ -69,11 +114,21 @@ private final class SelectionView: NSView {
     }
     private var startPoint: CGPoint?
     private var currentPoint: CGPoint?
+    private var freehandPoints: [CGPoint] = []
     private var pointerTrackingArea: NSTrackingArea?
-    private let hintText = NSAttributedString(string: "Drag to select text  ·  Esc to cancel", attributes: [
-        .font: NSFont.systemFont(ofSize: 12, weight: .medium),
-        .foregroundColor: NSColor.white
-    ])
+    private let mode: SelectionMode
+    private let hintText: NSAttributedString
+
+    init(frame: CGRect, mode: SelectionMode) {
+        self.mode = mode
+        hintText = NSAttributedString(
+            string: mode == .freehand ? "Draw around text  ·  Esc to cancel" : "Drag to select text  ·  Esc to cancel",
+            attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .medium), .foregroundColor: NSColor.white]
+        )
+        super.init(frame: frame)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var acceptsFirstResponder: Bool { true }
 
@@ -90,19 +145,36 @@ private final class SelectionView: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        if let selection = selectionRect, selection.width > 0, selection.height > 0 {
-            NSColor.controlAccentColor.withAlphaComponent(0.10).setFill()
-            selection.fill()
-            NSColor.black.withAlphaComponent(0.55).setStroke()
-            let contrastOutline = NSBezierPath(rect: selection.insetBy(dx: 0.5, dy: 0.5))
-            contrastOutline.lineWidth = 3
-            contrastOutline.stroke()
-            NSColor.white.setStroke()
-            let outline = NSBezierPath(rect: selection.insetBy(dx: 0.5, dy: 0.5))
-            outline.lineWidth = 1
-            outline.stroke()
+        let shape: NSBezierPath?
+        if mode == .freehand {
+            guard let first = freehandPoints.first else { drawIdleHint(); return }
+            let path = NSBezierPath()
+            path.windingRule = .evenOdd
+            path.move(to: first)
+            freehandPoints.dropFirst().forEach { path.line(to: $0) }
+            if freehandPoints.count > 2 { path.close() }
+            shape = path
+        } else if let selection = selectionRect, selection.width > 0, selection.height > 0 {
+            shape = NSBezierPath(rect: selection.insetBy(dx: 0.5, dy: 0.5))
+        } else {
+            shape = nil
         }
-        if startPoint == nil, let pointerLocation { drawHint(near: pointerLocation) }
+        if let shape {
+            NSColor.controlAccentColor.withAlphaComponent(0.10).setFill()
+            shape.fill()
+            NSColor.black.withAlphaComponent(0.55).setStroke()
+            shape.lineWidth = 3
+            shape.stroke()
+            NSColor.white.setStroke()
+            shape.lineWidth = 1
+            shape.stroke()
+        }
+        drawIdleHint()
+    }
+
+    private func drawIdleHint() {
+        guard startPoint == nil else { return }
+        drawHint(near: pointerLocation ?? CGPoint(x: bounds.midX, y: bounds.midY))
     }
 
     private func drawHint(near point: CGPoint) {
@@ -138,30 +210,61 @@ private final class SelectionView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        startPoint = convert(event.locationInWindow, from: nil)
-        currentPoint = startPoint
+#if DEBUG
+        captureLog.notice("Selection mouse down")
+#endif
+        let point = convert(event.locationInWindow, from: nil)
+        startPoint = point
+        currentPoint = point
+        freehandPoints = mode == .freehand ? [point] : []
         needsDisplay = true
     }
 
     override func mouseDragged(with event: NSEvent) {
         currentPoint = convert(event.locationInWindow, from: nil)
+        if mode == .freehand, let currentPoint, bounds.contains(currentPoint),
+           let last = freehandPoints.last, hypot(currentPoint.x - last.x, currentPoint.y - last.y) >= 2 {
+            freehandPoints.append(currentPoint)
+        }
         needsDisplay = true
     }
 
     override func mouseUp(with event: NSEvent) {
+#if DEBUG
+        captureLog.notice("Selection mouse up")
+#endif
         currentPoint = convert(event.locationInWindow, from: nil)
-        guard let rect = selectionRect, rect.width >= 4, rect.height >= 4 else {
-            startPoint = nil
-            currentPoint = nil
-            pointerLocation = convert(event.locationInWindow, from: nil)
-            needsDisplay = true
+        if mode == .freehand {
+            if let currentPoint, bounds.contains(currentPoint) { freehandPoints.append(currentPoint) }
+            let area = SelectionArea.freehand(freehandPoints)
+            guard freehandPoints.count >= 3, area.bounds.width >= 4, area.bounds.height >= 4 else {
+                resetSelection()
+                return
+            }
+            onSelection?(area)
             return
         }
-        onSelection?(rect)
+        guard let rect = selectionRect, rect.width >= 4, rect.height >= 4 else {
+            resetSelection()
+            return
+        }
+        onSelection?(.rectangle(rect))
+    }
+
+    private func resetSelection() {
+        startPoint = nil
+        currentPoint = nil
+        freehandPoints = []
+        needsDisplay = true
     }
 
     override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 { onCancel?() }
+        if event.keyCode == 53 {
+#if DEBUG
+            captureLog.notice("Selection cancelled with Escape")
+#endif
+            onCancel?()
+        }
         else { super.keyDown(with: event) }
     }
 

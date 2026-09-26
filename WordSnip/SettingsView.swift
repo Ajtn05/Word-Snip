@@ -5,6 +5,7 @@ import SwiftUI
 @MainActor
 final class SettingsModel: ObservableObject {
     @Published var shortcut: CaptureShortcut
+    @Published var freehandShortcut: CaptureShortcut
     @Published var showMenuBarIcon: Bool
     @Published var singleLineText: Bool
     @Published var launchAtLogin: Bool
@@ -12,17 +13,26 @@ final class SettingsModel: ObservableObject {
     @Published var isRecordingShortcut = false
 
     var onShortcutChange: ((CaptureShortcut) -> Bool)?
+    var onFreehandShortcutChange: ((CaptureShortcut) -> Bool)?
     var onMenuBarChange: ((Bool) -> Void)?
 
     init() {
+        let initialShortcut: CaptureShortcut
         if let data = UserDefaults.standard.data(forKey: "captureShortcutV2"),
            let saved = try? JSONDecoder().decode(CaptureShortcut.self, from: data) {
-            shortcut = saved
+            initialShortcut = saved
         } else if let legacy = UserDefaults.standard.object(forKey: "captureShortcut") as? Int,
                   let preset = CaptureShortcut.legacyPreset(legacy) {
-            shortcut = preset
+            initialShortcut = preset
         } else {
-            shortcut = .default
+            initialShortcut = .default
+        }
+        shortcut = initialShortcut
+        if let data = UserDefaults.standard.data(forKey: "freehandShortcut"),
+           let saved = try? JSONDecoder().decode(CaptureShortcut.self, from: data) {
+            freehandShortcut = saved
+        } else {
+            freehandShortcut = initialShortcut == .defaultFreehand ? .alternateFreehand : .defaultFreehand
         }
         showMenuBarIcon = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
         singleLineText = UserDefaults.standard.bool(forKey: "singleLineText")
@@ -54,6 +64,26 @@ final class SettingsModel: ObservableObject {
         message = "Use a key with ⌘, ⌃, or ⌥. Press Esc to cancel."
     }
 
+    @discardableResult
+    func setFreehandShortcut(_ value: CaptureShortcut) -> Bool {
+        guard !value.isSettingsShortcut else {
+            message = "⌃⌥, is reserved for opening Settings. Choose another shortcut."
+            return false
+        }
+        guard let data = try? JSONEncoder().encode(value) else {
+            message = "Could not save the shortcut. Try again."
+            return false
+        }
+        guard onFreehandShortcutChange?(value) == true else {
+            message = "That shortcut is already in use. Try another combination."
+            return false
+        }
+        freehandShortcut = value
+        UserDefaults.standard.set(data, forKey: "freehandShortcut")
+        message = nil
+        return true
+    }
+
     func setMenuBarIcon(_ value: Bool) {
         showMenuBarIcon = value
         UserDefaults.standard.set(value, forKey: "showMenuBarIcon")
@@ -79,10 +109,11 @@ final class SettingsModel: ObservableObject {
 }
 
 struct SettingsView: View {
-    static let windowSize = CGSize(width: 540, height: 670)
+    static let windowSize = CGSize(width: 540, height: 790)
 
     @ObservedObject var model: SettingsModel
     var onCapture: () -> Void
+    var onFreehandCapture: () -> Void
     var onRecordingChange: (Bool) -> Void
 
     var body: some View {
@@ -113,14 +144,37 @@ struct SettingsView: View {
                         HStack(spacing: 13) {
                             settingIcon("keyboard", color: .blue)
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Capture shortcut").font(SettingsFont.demi(14))
-                                Text("Start a selection from any app")
+                                Text("Rectangle shortcut").font(SettingsFont.demi(14))
+                                Text("Drag a rectangle around text")
                                     .font(SettingsFont.regular(11))
                                     .foregroundStyle(.secondary)
                             }
                             Spacer(minLength: 8)
-                            ShortcutRecorder(shortcut: model.shortcut,
+                            ShortcutRecorder(shortcut: model.shortcut, accessibilityLabel: "Rectangle shortcut",
                                              onShortcut: { model.setShortcut($0) },
+                                             onInvalid: { model.rejectShortcut() },
+                                             onRecordingChange: { recording in
+                                                 model.isRecordingShortcut = recording
+                                                 if recording { model.message = nil }
+                                                 onRecordingChange(recording)
+                                             })
+                                .frame(width: 160, height: 36)
+                        }
+                        .padding(15)
+
+                        Divider().padding(.leading, 56)
+
+                        HStack(spacing: 13) {
+                            settingIcon("lasso", color: .orange)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Freehand shortcut").font(SettingsFont.demi(14))
+                                Text("Draw around the text you want")
+                                    .font(SettingsFont.regular(11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 8)
+                            ShortcutRecorder(shortcut: model.freehandShortcut, accessibilityLabel: "Freehand shortcut",
+                                             onShortcut: { model.setFreehandShortcut($0) },
                                              onInvalid: { model.rejectShortcut() },
                                              onRecordingChange: { recording in
                                                  model.isRecordingShortcut = recording
@@ -138,14 +192,22 @@ struct SettingsView: View {
                                 .font(SettingsFont.regular(11))
                                 .foregroundStyle(.secondary)
                             Spacer()
-                            Button("Use default") {
+                            Button("Reset rectangle") {
                                 NSApp.keyWindow?.makeFirstResponder(nil)
                                 model.setShortcut(.default)
                             }
                                 .buttonStyle(.plain)
                                 .font(SettingsFont.demi(11))
                                 .foregroundStyle(.tint)
-                                .disabled(model.shortcut == .default && model.message == nil)
+                                .disabled(model.shortcut == .default)
+                            Button("Reset freehand") {
+                                NSApp.keyWindow?.makeFirstResponder(nil)
+                                model.setFreehandShortcut(.defaultFreehand)
+                            }
+                                .buttonStyle(.plain)
+                                .font(SettingsFont.demi(11))
+                                .foregroundStyle(.tint)
+                                .disabled(model.freehandShortcut == .defaultFreehand)
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 11)
@@ -179,7 +241,7 @@ struct SettingsView: View {
                             settingIcon("menubar.rectangle", color: .purple)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Menu bar icon").font(SettingsFont.demi(14))
-                                Text("Keep Word Snip within reach")
+                                Text("Open capture modes and Settings from one menu")
                                     .font(SettingsFont.regular(11))
                                     .foregroundStyle(.secondary)
                             }
@@ -230,7 +292,7 @@ struct SettingsView: View {
                     HStack(spacing: 11) {
                         Image(systemName: "viewfinder")
                             .font(.system(size: 18, weight: .semibold))
-                        Text("Capture text now")
+                        Text("Capture rectangle")
                             .font(SettingsFont.demi(15))
                         Spacer()
                         Text(model.shortcut.title)
@@ -248,7 +310,26 @@ struct SettingsView: View {
                 }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.defaultAction)
-                .help("Start a screen selection")
+                .help("Start a rectangular selection")
+
+                Button(action: onFreehandCapture) {
+                    HStack(spacing: 11) {
+                        Image(systemName: "lasso")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Capture freehand")
+                            .font(SettingsFont.demi(15))
+                        Spacer()
+                        Text(model.freehandShortcut.title)
+                            .font(SettingsFont.demi(12))
+                    }
+                    .padding(.horizontal, 18)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 46)
+                    .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("Draw around text to capture it")
             }
             .padding(.horizontal, 27)
             .padding(.bottom, 27)
@@ -288,6 +369,7 @@ private extension View {
 
 private struct ShortcutRecorder: NSViewRepresentable {
     let shortcut: CaptureShortcut
+    let accessibilityLabel: String
     let onShortcut: (CaptureShortcut) -> Bool
     let onInvalid: () -> Void
     let onRecordingChange: (Bool) -> Void
@@ -296,7 +378,7 @@ private struct ShortcutRecorder: NSViewRepresentable {
         let view = ShortcutRecorderControl()
         view.setAccessibilityElement(true)
         view.setAccessibilityRole(.button)
-        view.setAccessibilityLabel("Capture shortcut")
+        view.setAccessibilityLabel(accessibilityLabel)
         return view
     }
 

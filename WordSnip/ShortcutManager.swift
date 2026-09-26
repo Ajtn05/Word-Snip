@@ -8,6 +8,10 @@ struct CaptureShortcut: Codable, Equatable {
 
     static let `default` = CaptureShortcut(keyCode: UInt32(kVK_ANSI_2),
                                            modifiers: UInt32(controlKey | shiftKey), key: "2")
+    static let defaultFreehand = CaptureShortcut(keyCode: UInt32(kVK_ANSI_3),
+                                                modifiers: UInt32(controlKey | shiftKey), key: "3")
+    static let alternateFreehand = CaptureShortcut(keyCode: UInt32(kVK_ANSI_4),
+                                                  modifiers: UInt32(controlKey | shiftKey), key: "4")
 
     static func legacyPreset(_ value: Int) -> CaptureShortcut? {
         switch value {
@@ -86,9 +90,12 @@ struct CaptureShortcut: Codable, Equatable {
 
 final class ShortcutManager {
     var onCapture: (() -> Void)?
+    var onFreehandCapture: (() -> Void)?
     var onSettings: (() -> Void)?
     private var captureHotKey: EventHotKeyRef?
     private var currentShortcut: CaptureShortcut?
+    private var freehandHotKey: EventHotKeyRef?
+    private var currentFreehandShortcut: CaptureShortcut?
     private var settingsHotKey: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
 
@@ -104,6 +111,7 @@ final class ShortcutManager {
             switch hotKeyID.id {
             case 1: manager.onCapture?()
             case 2: manager.onSettings?()
+            case 3: manager.onFreehandCapture?()
             default: break
             }
             return noErr
@@ -116,13 +124,14 @@ final class ShortcutManager {
 
     deinit {
         if let captureHotKey { UnregisterEventHotKey(captureHotKey) }
+        if let freehandHotKey { UnregisterEventHotKey(freehandHotKey) }
         if let settingsHotKey { UnregisterEventHotKey(settingsHotKey) }
         if let eventHandler { RemoveEventHandler(eventHandler) }
     }
 
     @discardableResult
     func registerCapture(_ shortcut: CaptureShortcut) -> Bool {
-        guard !shortcut.isSettingsShortcut else { return false }
+        guard !shortcut.isSettingsShortcut, shortcut != currentFreehandShortcut else { return false }
         if shortcut == currentShortcut, captureHotKey != nil { return true }
         let previous = currentShortcut
         if let captureHotKey { UnregisterEventHotKey(captureHotKey) }
@@ -139,6 +148,27 @@ final class ShortcutManager {
     private func installCapture(_ shortcut: CaptureShortcut) -> Bool {
         let id = EventHotKeyID(signature: fourCharCode("WSNP"), id: 1)
         return RegisterEventHotKey(shortcut.keyCode, shortcut.modifiers, id, GetApplicationEventTarget(), 0, &captureHotKey) == noErr
+    }
+
+    @discardableResult
+    func registerFreehand(_ shortcut: CaptureShortcut) -> Bool {
+        guard !shortcut.isSettingsShortcut, shortcut != currentShortcut else { return false }
+        if shortcut == currentFreehandShortcut, freehandHotKey != nil { return true }
+        let previous = currentFreehandShortcut
+        if let freehandHotKey { UnregisterEventHotKey(freehandHotKey) }
+        freehandHotKey = nil
+        if installFreehand(shortcut) {
+            currentFreehandShortcut = shortcut
+            return true
+        }
+        if let previous, installFreehand(previous) { currentFreehandShortcut = previous }
+        else { currentFreehandShortcut = nil }
+        return false
+    }
+
+    private func installFreehand(_ shortcut: CaptureShortcut) -> Bool {
+        let id = EventHotKeyID(signature: fourCharCode("WSNP"), id: 3)
+        return RegisterEventHotKey(shortcut.keyCode, shortcut.modifiers, id, GetApplicationEventTarget(), 0, &freehandHotKey) == noErr
     }
 
     private func fourCharCode(_ value: String) -> OSType {

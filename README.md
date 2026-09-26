@@ -33,13 +33,17 @@ In Settings, turn on **Single-line text** to copy OCR results as one continuous 
 
 To set either capture shortcut, open Settings, click its current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app or the other capture mode already uses that combination, Word Snip keeps your previous shortcut.
 
-## Download
+## Download and install
 
-[Download Word Snip 1.4 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.4.0/Word-Snip-v1.4-macOS.zip), unzip it, and move `Word Snip.app` to `/Applications` before opening it. The app supports Apple silicon and Intel Macs running macOS 14 or newer.
+Word Snip runs on Apple silicon and Intel Macs with macOS 14 or newer.
 
-**This build is development signed and not notarized.** macOS may block its first launch. If you trust the download, try opening the app, then go to **System Settings → Privacy & Security → Open Anyway**.
+1. [Download Word Snip 1.4 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.4.0/Word-Snip-v1.4-macOS.zip).
+2. Open the downloaded ZIP file, then drag `Word Snip.app` into your **Applications** folder.
+3. Open **Word Snip** from **Applications**.
 
-When prompted, grant **Screen & System Audio Recording** access. Fully quit Word Snip and reopen it after granting access.
+**If macOS blocks the app:** This build is development signed and not notarized. After trying to open it, go to **System Settings → Privacy & Security**, click **Open Anyway** for Word Snip, and confirm that you want to open it. Only do this if you trust the download.
+
+**When asked for screen access:** Allow **Screen & System Audio Recording**. Then fully quit Word Snip and open it again so the permission takes effect.
 
 ## Build and test from source
 

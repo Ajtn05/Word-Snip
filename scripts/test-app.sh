@@ -7,7 +7,11 @@ derived_dir="$repo_dir/build/.derived-data-testing"
 app_path="$build_dir/Word Snip Testing.app"
 executable_path="$app_path/Contents/MacOS/Word Snip Testing"
 bundle_id="com.aldrinnellas.wordsnip.testing"
-signing_identity="CD4D712C8AA4110E3322ADAACA1DEAE098E4C902"
+signing_identity="${WORD_SNIP_SIGNING_IDENTITY:-Apple Development}"
+development_team="${WORD_SNIP_DEVELOPMENT_TEAM:-}"
+if [[ -z "$development_team" && -d "$app_path" ]]; then
+    development_team="$(codesign -dv --verbose=4 "$app_path" 2>&1 | sed -n 's/^TeamIdentifier=//p')"
+fi
 
 usage() {
     echo "Usage: scripts/test-app.sh {build|run|check|stop|path}" >&2
@@ -49,6 +53,10 @@ check_app() {
 }
 
 build_app() {
+    [[ -n "$development_team" ]] || {
+        echo "Set WORD_SNIP_DEVELOPMENT_TEAM to the Apple Development certificate's team ID." >&2
+        exit 1
+    }
     stop_app
     mkdir -p "$build_dir"
     xcodebuild \
@@ -61,6 +69,7 @@ build_app() {
         'PRODUCT_NAME=Word Snip Testing' \
         "PRODUCT_BUNDLE_IDENTIFIER=$bundle_id" \
         "CODE_SIGN_IDENTITY=$signing_identity" \
+        "DEVELOPMENT_TEAM=$development_team" \
         'CODE_SIGN_STYLE=Manual' \
         'ENABLE_DEBUG_DYLIB=NO' \
         build

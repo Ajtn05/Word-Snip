@@ -4,13 +4,12 @@
   <h1>Word Snip</h1>
 
   <p>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.3.0"><img alt="Release v1.3.0" src="https://img.shields.io/badge/release-v1.3.0-2f6feb"></a>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.3.0/Word-Snip-v1.3-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.4.0"><img alt="Release v1.4.0" src="https://img.shields.io/badge/release-v1.4.0-2f6feb"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.4.0/Word-Snip-v1.4-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
     <img alt="Requires macOS 14 or newer" src="https://img.shields.io/badge/macOS-14%2B-555555">
     <img alt="Apple silicon and Intel" src="https://img.shields.io/badge/Macs-Apple%20silicon%20%2B%20Intel-555555">
   </p>
 
-  <p>Because my girlfriend wanted to copy text for her flashcards...</p>
   <p><strong>Copy text from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
   <p>Select an area of your screen. Word Snip recognizes the text with Apple Vision and copies it to your clipboard.</p>
 </div>
@@ -35,17 +34,15 @@ To set either capture shortcut, open Settings, click its current shortcut, then 
 
 ## Download
 
-[Download Word Snip 1.3 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.3.0/Word-Snip-v1.3-macOS.zip), unzip it, and move `Word Snip.app` to `/Applications` before opening it. The app supports Apple silicon and Intel Macs running macOS 14 or newer.
+[Download Word Snip 1.4 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.4.0/Word-Snip-v1.4-macOS.zip), unzip it, and move `Word Snip.app` to `/Applications` before opening it. The app supports Apple silicon and Intel Macs running macOS 14 or newer.
 
-The 1.3 download predates freehand selection. Build the current source to use it until a new release is published.
-
-**This build is development signed and not notarized.** macOS may block its first launch. If you trust the download, try opening the app, then go to **System Settings → Privacy & Security → Open Anyway**. The signing certificate includes the developer's email address.
+**This build is development signed and not notarized.** macOS may block its first launch. If you trust the download, try opening the app, then go to **System Settings → Privacy & Security → Open Anyway**.
 
 When prompted, grant **Screen & System Audio Recording** access. Fully quit Word Snip and reopen it after granting access.
 
 ## Build and test from source
 
-Requires macOS 14 or newer, Xcode, and [XcodeGen](https://github.com/yonaskolb/XcodeGen). On another Mac, set `CODE_SIGN_IDENTITY` and `DEVELOPMENT_TEAM` in `project.yml` to your own Apple Development signing identity and team, and update the identity in `scripts/test-app.sh`.
+Requires macOS 14 or newer, Xcode, [XcodeGen](https://github.com/yonaskolb/XcodeGen), and an Apple Development signing identity. For a first build, set `WORD_SNIP_DEVELOPMENT_TEAM` to the certificate's team ID. The test script reuses the team ID from an existing signed test app on later builds. Set `WORD_SNIP_SIGNING_IDENTITY` to choose a specific identity if needed.
 
 ```sh
 xcodegen generate

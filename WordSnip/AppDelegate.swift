@@ -1,13 +1,9 @@
 import AppKit
 import CoreGraphics
-import OSLog
 import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
-#if DEBUG
-    private let captureLog = Logger(subsystem: "com.aldrinnellas.wordsnip.testing", category: "Capture")
-#endif
     private let settingsModel = SettingsModel()
     private let shortcutManager = ShortcutManager()
     private var statusItem: NSStatusItem?
@@ -118,17 +114,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func startCapture(mode: SelectionMode) {
         if let overlay {
-#if DEBUG
-            captureLog.notice("Replacing an unfinished selection")
-#endif
             overlay.close()
             self.overlay = nil
             isCapturing = false
         }
         guard !isCapturing else { return }
-#if DEBUG
-        captureLog.notice("Capture started: \(String(describing: mode))")
-#endif
         guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
             showPermissionAlert()
             return
@@ -137,25 +127,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindow?.orderOut(nil)
         let overlay = SelectionOverlay(mode: mode)
         overlay.onCancel = { [weak self] in
-#if DEBUG
-            self?.captureLog.notice("Selection cancelled")
-#endif
             self?.overlay = nil
             self?.isCapturing = false
         }
         overlay.onSelection = { [weak self] screen, selection in
             guard let self else { return }
-#if DEBUG
-            self.captureLog.notice("Selection completed")
-#endif
             self.overlay = nil
             Task {
                 // Let WindowServer remove the selection overlay before taking the screenshot.
                 try? await Task.sleep(for: .milliseconds(180))
                 do {
-#if DEBUG
-                    self.captureLog.notice("Recognizing text")
-#endif
                     let text = try await TextCapture.recognize(
                         screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText
                     )
@@ -163,14 +144,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     guard NSPasteboard.general.setString(text, forType: .string) else {
                         throw CaptureError.clipboardUnavailable
                     }
-#if DEBUG
-                    self.captureLog.notice("Copied \(text.count) characters")
-#endif
                     self.showFeedback(on: screen)
                 } catch {
-#if DEBUG
-                    self.captureLog.error("Capture failed: \(error.localizedDescription)")
-#endif
                     self.showError(error.localizedDescription)
                 }
                 self.isCapturing = false
@@ -178,15 +153,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         self.overlay = overlay
         overlay.show()
-#if DEBUG
-        captureLog.notice("Overlay opened; app active: \(NSApp.isActive), selection window key: \(overlay.hasKeyWindow)")
-#endif
     }
 
     private func showPermissionAlert() {
         let alert = NSAlert()
         alert.messageText = "Screen Recording is not active for this copy"
-        alert.informativeText = "After enabling access, quit Word Snip completely and reopen it. If access already appears enabled, check that it is enabled for the copy you launched:\n\n\(Bundle.main.bundleURL.path)"
+        alert.informativeText = "Enable Screen & System Audio Recording for Word Snip, then quit and reopen the app."
         alert.addButton(withTitle: "Open System Settings")
         alert.addButton(withTitle: "Quit Word Snip")
         alert.addButton(withTitle: "Cancel")

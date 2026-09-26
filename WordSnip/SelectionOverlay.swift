@@ -1,5 +1,4 @@
 import AppKit
-import OSLog
 
 enum SelectionMode {
     case rectangle
@@ -31,7 +30,6 @@ final class SelectionOverlay {
     private var windows: [NSWindow] = []
     private var finished = false
     private let mode: SelectionMode
-    var hasKeyWindow: Bool { windows.contains(where: \.isKeyWindow) }
 
     init(mode: SelectionMode) {
         self.mode = mode
@@ -101,9 +99,6 @@ private final class SelectionWindow: NSPanel {
 }
 
 private final class SelectionView: NSView {
-#if DEBUG
-    private let captureLog = Logger(subsystem: "com.aldrinnellas.wordsnip.testing", category: "Capture")
-#endif
     var onSelection: ((SelectionArea) -> Void)?
     var onCancel: (() -> Void)?
     var pointerLocation: CGPoint? {
@@ -210,9 +205,6 @@ private final class SelectionView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
-#if DEBUG
-        captureLog.notice("Selection mouse down")
-#endif
         let point = convert(event.locationInWindow, from: nil)
         startPoint = point
         currentPoint = point
@@ -230,9 +222,6 @@ private final class SelectionView: NSView {
     }
 
     override func mouseUp(with event: NSEvent) {
-#if DEBUG
-        captureLog.notice("Selection mouse up")
-#endif
         currentPoint = convert(event.locationInWindow, from: nil)
         if mode == .freehand {
             if let currentPoint, bounds.contains(currentPoint) { freehandPoints.append(currentPoint) }
@@ -260,9 +249,6 @@ private final class SelectionView: NSView {
 
     override func keyDown(with event: NSEvent) {
         if event.keyCode == 53 {
-#if DEBUG
-            captureLog.notice("Selection cancelled with Escape")
-#endif
             onCancel?()
         }
         else { super.keyDown(with: event) }

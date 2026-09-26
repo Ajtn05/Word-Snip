@@ -1,6 +1,5 @@
 import AppKit
 import CoreGraphics
-import OSLog
 import ScreenCaptureKit
 import Vision
 
@@ -21,9 +20,6 @@ enum CaptureError: LocalizedError {
 }
 
 enum TextCapture {
-#if DEBUG
-    private static let captureLog = Logger(subsystem: "com.aldrinnellas.wordsnip.testing", category: "Capture")
-#endif
     static func recognize(screen: NSScreen, selection: SelectionArea, singleLine: Bool) async throws -> String {
         guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
             throw CaptureError.displayUnavailable
@@ -41,9 +37,6 @@ enum TextCapture {
         configuration.showsCursor = false
         let filter = SCContentFilter(display: display, excludingWindows: [])
         let screenshot = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: configuration)
-#if DEBUG
-        captureLog.notice("Screenshot \(screenshot.width) x \(screenshot.height)")
-#endif
 
         let scaleX = CGFloat(screenshot.width) / screen.frame.width
         let scaleY = CGFloat(screenshot.height) / screen.frame.height
@@ -57,9 +50,6 @@ enum TextCapture {
         guard crop.width > 0, crop.height > 0, let croppedImage = screenshot.cropping(to: crop) else {
             throw CaptureError.invalidSelection
         }
-#if DEBUG
-        captureLog.notice("Crop \(crop.width) x \(crop.height)")
-#endif
         let image: CGImage
         switch selection {
         case .rectangle:
@@ -78,9 +68,6 @@ enum TextCapture {
         request.usesLanguageCorrection = true
         try VNImageRequestHandler(cgImage: image).perform([request])
         let lines = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
-#if DEBUG
-        captureLog.notice("OCR found \(lines.count) lines")
-#endif
         let recognized = lines.joined(separator: "\n")
         let text = singleLine
             ? recognized.split(whereSeparator: \.isWhitespace).joined(separator: " ")

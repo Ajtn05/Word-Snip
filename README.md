@@ -36,7 +36,7 @@ To set either capture shortcut, open Settings, click its current shortcut, then 
 <p align="center">
   <img src="assets/word-snip-settings%20screenshot.png" alt="Word Snip Settings showing capture shortcuts, single-line text, menu bar icon, and launch at login" width="420">
 </p>
-
+ 
 ## Download and install
 
 Word Snip runs on Apple silicon and Intel Macs with macOS 14 or newer.

@@ -185,7 +185,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showFeedback(on screen: NSScreen) {
-        let size = CGSize(width: 232, height: 60)
+        let title = NSTextField(labelWithString: "Text copied")
+        title.font = .systemFont(ofSize: 14, weight: .semibold)
+        title.textColor = .white
+
+        let detail = NSTextField(labelWithString: "Ready to paste")
+        detail.font = .systemFont(ofSize: 11)
+        detail.textColor = NSColor.white.withAlphaComponent(0.72)
+
+        let iconInset: CGFloat = 17
+        let iconSize: CGFloat = 26
+        let textX = iconInset + iconSize + 11
+        let trailingInset: CGFloat = 24
+        let textWidth = ceil(max(title.intrinsicContentSize.width, detail.intrinsicContentSize.width))
+        let size = CGSize(width: textX + textWidth + trailingInset, height: 60)
         let panel = NSPanel(contentRect: CGRect(origin: .zero, size: size),
                             styleMask: [.borderless], backing: .buffered, defer: false)
         let background = NSVisualEffectView(frame: CGRect(origin: .zero, size: size))
@@ -200,21 +213,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let image = NSImage(systemSymbolName: "checkmark.circle.fill", accessibilityDescription: "Copied") {
             let icon = NSImageView(image: image)
-            icon.frame = CGRect(x: 17, y: 17, width: 26, height: 26)
+            icon.frame = CGRect(x: iconInset, y: 17, width: iconSize, height: iconSize)
             icon.contentTintColor = .systemGreen
             background.addSubview(icon)
         }
 
-        let title = NSTextField(labelWithString: "Text copied")
-        title.font = .systemFont(ofSize: 14, weight: .semibold)
-        title.textColor = .white
-        title.frame = CGRect(x: 54, y: 30, width: 164, height: 19)
+        title.frame = CGRect(x: textX, y: 30, width: textWidth, height: 19)
         background.addSubview(title)
 
-        let detail = NSTextField(labelWithString: "Ready to paste")
-        detail.font = .systemFont(ofSize: 11)
-        detail.textColor = NSColor.white.withAlphaComponent(0.72)
-        detail.frame = CGRect(x: 54, y: 14, width: 164, height: 15)
+        detail.frame = CGRect(x: textX, y: 14, width: textWidth, height: 15)
         background.addSubview(detail)
 
         panel.contentView = background

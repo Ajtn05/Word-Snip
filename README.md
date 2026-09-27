@@ -5,8 +5,8 @@
 
   <p>because my girlfriend asked for it...</p>
   <p>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.4.0"><img alt="Release v1.4.0" src="https://img.shields.io/badge/release-v1.4.0-2f6feb"></a>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.4.0/Word-Snip-v1.4-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.5.0"><img alt="Release v1.5.0" src="https://img.shields.io/badge/release-v1.5.0-2f6feb"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.5.0/Word-Snip-v1.5-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
     <img alt="Requires macOS 14 or newer" src="https://img.shields.io/badge/macOS-14%2B-555555">
     <img alt="Apple silicon and Intel" src="https://img.shields.io/badge/Macs-Apple%20silicon%20%2B%20Intel-555555">
   </p>
@@ -37,7 +37,7 @@ To set either capture shortcut, open Settings, click its current shortcut, then 
 
 Word Snip runs on Apple silicon and Intel Macs with macOS 14 or newer.
 
-1. [Download Word Snip 1.4 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.4.0/Word-Snip-v1.4-macOS.zip).
+1. [Download Word Snip 1.5 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.5.0/Word-Snip-v1.5-macOS.zip).
 2. Open the downloaded ZIP file, then drag `Word Snip.app` into your **Applications** folder.
 3. Open **Word Snip** from **Applications**.
 

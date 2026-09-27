@@ -90,6 +90,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
             window.titlebarSeparatorStyle = .none
+            window.backgroundColor = .windowBackgroundColor
             window.isMovableByWindowBackground = true
             window.contentView = hosting
             window.center()

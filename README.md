@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="WordSnip/Assets.xcassets/AppIcon.appiconset/icon_512@1x.png" alt="Word Snip app icon" width="200">
+  <img src="WordSnip/Assets.xcassets/AppIcon.appiconset/icon_512@2x.png" alt="Word Snip icon: white text viewfinder on a blue rounded square" width="200">
 
   <h1>Word Snip</h1>
 

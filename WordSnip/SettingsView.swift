@@ -119,30 +119,30 @@ struct SettingsView: View {
     var body: some View {
         ZStack {
             Color(nsColor: .windowBackgroundColor)
+                .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 18) {
-                HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 21) {
+                VStack(spacing: 7) {
                     Image(systemName: "text.viewfinder")
-                        .font(.system(size: 25, weight: .medium))
+                        .font(.system(size: 31, weight: .medium))
                         .foregroundStyle(.white)
                         .frame(width: 50, height: 50)
                         .background(Color.accentColor.gradient, in: RoundedRectangle(cornerRadius: 14))
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Word Snip")
-                            .font(SettingsFont.demi(24))
-                        Text("Capture text from anywhere on your Mac")
-                            .font(SettingsFont.regular(13))
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
+                    Text("Word Snip")
+                        .font(SettingsFont.demi(24))
+                        .padding(.top, 2)
+                    Text("Capture text from anywhere on your Mac")
+                        .font(SettingsFont.regular(13))
+                        .foregroundStyle(.secondary)
                 }
+                .frame(maxWidth: .infinity)
 
-                VStack(alignment: .leading, spacing: 9) {
+                VStack(alignment: .leading, spacing: 8) {
                     sectionLabel("CAPTURE")
                     VStack(spacing: 0) {
+                        Divider()
                         HStack(spacing: 13) {
-                            settingIcon("keyboard", color: .blue)
+                            settingIcon("keyboard")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Rectangle shortcut").font(SettingsFont.demi(14))
                                 Text("Drag a rectangle around text")
@@ -160,12 +160,12 @@ struct SettingsView: View {
                                              })
                                 .frame(width: 160, height: 36)
                         }
-                        .padding(15)
+                        .padding(.vertical, 15)
 
-                        Divider().padding(.leading, 56)
+                        Divider().padding(.leading, 43)
 
                         HStack(spacing: 13) {
-                            settingIcon("lasso", color: .orange)
+                            settingIcon("lasso")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Freehand shortcut").font(SettingsFont.demi(14))
                                 Text("Draw around the text you want")
@@ -183,9 +183,9 @@ struct SettingsView: View {
                                              })
                                 .frame(width: 160, height: 36)
                         }
-                        .padding(15)
+                        .padding(.vertical, 15)
 
-                        Divider().padding(.leading, 56)
+                        Divider().padding(.leading, 43)
 
                         HStack {
                             Text("Click the shortcut, then press your keys")
@@ -198,7 +198,7 @@ struct SettingsView: View {
                             }
                                 .buttonStyle(.plain)
                                 .font(SettingsFont.demi(11))
-                                .foregroundStyle(.tint)
+                                .foregroundStyle(.secondary)
                                 .disabled(model.shortcut == .default)
                             Button("Reset freehand") {
                                 NSApp.keyWindow?.makeFirstResponder(nil)
@@ -206,20 +206,19 @@ struct SettingsView: View {
                             }
                                 .buttonStyle(.plain)
                                 .font(SettingsFont.demi(11))
-                                .foregroundStyle(.tint)
+                                .foregroundStyle(.secondary)
                                 .disabled(model.freehandShortcut == .defaultFreehand)
                         }
-                        .padding(.horizontal, 16)
                         .padding(.vertical, 11)
                     }
-                    .cardStyle()
                 }
 
-                VStack(alignment: .leading, spacing: 9) {
+                VStack(alignment: .leading, spacing: 8) {
                     sectionLabel("PREFERENCES")
                     VStack(spacing: 0) {
+                        Divider()
                         HStack(spacing: 13) {
-                            settingIcon("text.alignleft", color: .green)
+                            settingIcon("text.alignleft")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Single-line text").font(SettingsFont.demi(14))
                                 Text("Join lines and replace extra spaces with one space")
@@ -232,13 +231,14 @@ struct SettingsView: View {
                                 set: { model.setSingleLineText($0) }
                             ))
                             .labelsHidden()
+                            .tint(.gray)
                         }
-                        .padding(15)
+                        .padding(.vertical, 15)
 
-                        Divider().padding(.leading, 56)
+                        Divider().padding(.leading, 43)
 
                         HStack(spacing: 13) {
-                            settingIcon("menubar.rectangle", color: .purple)
+                            settingIcon("menubar.rectangle")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Menu bar icon").font(SettingsFont.demi(14))
                                 Text("Open capture modes and Settings from one menu")
@@ -251,13 +251,14 @@ struct SettingsView: View {
                                 set: { model.setMenuBarIcon($0) }
                             ))
                             .labelsHidden()
+                            .tint(.gray)
                         }
-                        .padding(15)
+                        .padding(.vertical, 15)
 
-                        Divider().padding(.leading, 56)
+                        Divider().padding(.leading, 43)
 
                         HStack(spacing: 13) {
-                            settingIcon("arrow.up.right.square", color: .orange)
+                            settingIcon("arrow.up.right.square")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Launch at login").font(SettingsFont.demi(14))
                                 Text("Ready when you sign in")
@@ -270,10 +271,11 @@ struct SettingsView: View {
                                 set: { model.setLaunchAtLogin($0) }
                             ))
                             .labelsHidden()
+                            .tint(.gray)
                         }
-                        .padding(15)
+                        .padding(.vertical, 15)
+                        Divider()
                     }
-                    .cardStyle()
                 }
 
                 HStack(alignment: .top, spacing: 7) {
@@ -288,52 +290,21 @@ struct SettingsView: View {
 
                 Spacer(minLength: 0)
 
-                Button(action: onCapture) {
-                    HStack(spacing: 11) {
-                        Image(systemName: "viewfinder")
-                            .font(.system(size: 18, weight: .semibold))
-                        Text("Capture rectangle")
-                            .font(SettingsFont.demi(15))
-                        Spacer()
-                        Text(model.shortcut.title)
-                            .font(SettingsFont.demi(12))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(.white.opacity(0.16), in: Capsule())
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 18)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(Color.accentColor.gradient, in: RoundedRectangle(cornerRadius: 14))
-                    .shadow(color: Color.accentColor.opacity(0.25), radius: 8, y: 3)
+                VStack(spacing: 0) {
+                    Divider()
+                    captureButton("Capture rectangle", symbol: "viewfinder", shortcut: model.shortcut.title,
+                                  action: onCapture)
+                        .keyboardShortcut(.defaultAction)
+                        .help("Start a rectangular selection")
+                    Divider()
+                    captureButton("Capture freehand", symbol: "lasso", shortcut: model.freehandShortcut.title,
+                                  action: onFreehandCapture)
+                        .help("Draw around text to capture it")
                 }
-                .buttonStyle(.plain)
-                .keyboardShortcut(.defaultAction)
-                .help("Start a rectangular selection")
-
-                Button(action: onFreehandCapture) {
-                    HStack(spacing: 11) {
-                        Image(systemName: "lasso")
-                            .font(.system(size: 18, weight: .semibold))
-                        Text("Capture freehand")
-                            .font(SettingsFont.demi(15))
-                        Spacer()
-                        Text(model.freehandShortcut.title)
-                            .font(SettingsFont.demi(12))
-                    }
-                    .padding(.horizontal, 18)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 46)
-                    .background(Color.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .help("Draw around text to capture it")
             }
             .padding(.horizontal, 27)
             .padding(.bottom, 27)
-            .padding(.top, 54)
+            .padding(.top, 25)
         }
         .frame(width: Self.windowSize.width, height: Self.windowSize.height)
     }
@@ -346,25 +317,44 @@ struct SettingsView: View {
             .padding(.leading, 3)
     }
 
-    private func settingIcon(_ symbol: String, color: Color) -> some View {
+    private func settingIcon(_ symbol: String) -> some View {
         Image(systemName: symbol)
             .font(.system(size: 16, weight: .medium))
-            .foregroundStyle(color)
+            .foregroundStyle(.secondary)
             .frame(width: 30, height: 30)
-            .background(color.opacity(0.11), in: RoundedRectangle(cornerRadius: 8))
+    }
+
+    private func captureButton(_ title: String, symbol: String, shortcut: String,
+                               action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 13) {
+                Image(systemName: symbol)
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 30)
+                Text(title)
+                    .font(SettingsFont.demi(14))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Text(shortcut)
+                    .font(SettingsFont.regular(12))
+                    .foregroundStyle(.secondary)
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.tertiary)
+                    .padding(.leading, 6)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 15)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
 private enum SettingsFont {
-    static func regular(_ size: CGFloat) -> Font { .custom("AvenirNext-Regular", size: size) }
-    static func demi(_ size: CGFloat) -> Font { .custom("AvenirNext-DemiBold", size: size) }
-}
-
-private extension View {
-    func cardStyle() -> some View {
-        background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Color.primary.opacity(0.08)))
-    }
+    static func regular(_ size: CGFloat) -> Font { .system(size: size) }
+    static func demi(_ size: CGFloat) -> Font { .system(size: size, weight: .semibold) }
 }
 
 private struct ShortcutRecorder: NSViewRepresentable {
@@ -407,18 +397,16 @@ private final class ShortcutRecorderControl: NSView {
     }
 
     override func draw(_ dirtyRect: NSRect) {
-        let outline = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5), xRadius: 9, yRadius: 9)
-        NSColor.controlAccentColor.withAlphaComponent(isRecording ? 0.16 : 0.08).setFill()
-        outline.fill()
-        (isRecording ? NSColor.controlAccentColor : NSColor.separatorColor).setStroke()
-        outline.lineWidth = isRecording ? 1.5 : 1
+        let outline = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5), xRadius: 7, yRadius: 7)
+        (isRecording ? NSColor.labelColor : NSColor.separatorColor).setStroke()
+        outline.lineWidth = 1
         outline.stroke()
 
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
         paragraph.lineBreakMode = .byTruncatingTail
         let label = NSAttributedString(string: isRecording ? "Press keys…" : shortcut.title, attributes: [
-            .font: NSFont(name: "AvenirNext-DemiBold", size: 13) ?? NSFont.systemFont(ofSize: 13, weight: .semibold),
+            .font: NSFont.systemFont(ofSize: 12, weight: .medium),
             .foregroundColor: NSColor.labelColor,
             .paragraphStyle: paragraph
         ])

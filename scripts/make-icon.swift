@@ -5,35 +5,24 @@ let outputDirectory = URL(fileURLWithPath: "WordSnip/Assets.xcassets/AppIcon.app
 
 func drawIcon() {
     let background = NSBezierPath(roundedRect: NSRect(x: 64, y: 64, width: 896, height: 896),
-                                  xRadius: 216, yRadius: 216)
+                                  xRadius: 251, yRadius: 251)
     NSGradient(starting: NSColor(calibratedRed: 0.22, green: 0.52, blue: 0.98, alpha: 1),
                ending: NSColor(calibratedRed: 0.11, green: 0.31, blue: 0.76, alpha: 1))!
         .draw(in: background, angle: -45)
 
-    // A clear scan frame reads better than a document silhouette at Dock sizes.
-    let corners: [[NSPoint]] = [
-        [NSPoint(x: 400, y: 790), NSPoint(x: 225, y: 790), NSPoint(x: 225, y: 635)],
-        [NSPoint(x: 625, y: 790), NSPoint(x: 800, y: 790), NSPoint(x: 800, y: 635)],
-        [NSPoint(x: 800, y: 385), NSPoint(x: 800, y: 230), NSPoint(x: 625, y: 230)],
-        [NSPoint(x: 400, y: 230), NSPoint(x: 225, y: 230), NSPoint(x: 225, y: 385)]
-    ]
-    NSColor.white.setStroke()
-    for points in corners {
-        let path = NSBezierPath()
-        path.move(to: points[0])
-        path.line(to: points[1])
-        path.line(to: points[2])
-        path.lineWidth = 48
-        path.lineCapStyle = .round
-        path.lineJoinStyle = .round
-        path.stroke()
+    // Match the SF Symbol used in the Settings header: 31 points on a 50-point tile.
+    let symbolSize = 31 * (896 / 50.0)
+    let configuration = NSImage.SymbolConfiguration(pointSize: symbolSize, weight: .medium)
+        .applying(NSImage.SymbolConfiguration(paletteColors: [.white]))
+    guard let symbol = NSImage(systemSymbolName: "text.viewfinder", accessibilityDescription: nil)?
+        .withSymbolConfiguration(configuration) else {
+        fatalError("The text.viewfinder symbol is unavailable")
     }
-
-    NSColor.white.setFill()
-    for (y, width) in [(620.0, 330.0), (500.0, 355.0), (380.0, 280.0)] {
-        NSBezierPath(roundedRect: NSRect(x: 335, y: y, width: width, height: 48),
-                     xRadius: 24, yRadius: 24).fill()
-    }
+    let size = symbol.size
+    let rect = NSRect(x: (canvasSize - size.width) / 2,
+                      y: (canvasSize - size.height) / 2,
+                      width: size.width, height: size.height)
+    symbol.draw(in: rect)
 }
 
 func render(pixelSize: Int, filename: String) throws {

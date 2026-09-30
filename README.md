@@ -67,3 +67,7 @@ This workflow does not install or replace anything in `/Applications`. Prepare a
 ## Screen Recording permission
 
 For development, use only `build/testing/Word Snip Testing.app`. If macOS asks again after a rebuild, confirm that **Word Snip Testing** is enabled in **System Settings → Privacy & Security → Screen & System Audio Recording** and that the running process came from this path. Fully quit and reopen the test app after granting permission. The release app uses a separate permission entry.
+
+## License
+
+Word Snip is licensed under the [MIT License](LICENSE).

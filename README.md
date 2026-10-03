@@ -70,4 +70,10 @@ For development, use only `build/testing/Word Snip Testing.app`. If macOS asks a
 
 ## License
 
-Word Snip is licensed under the [MIT License](LICENSE).
+Copyright (c) 2026 Aldrin Nellas.
+
+Word Snip is licensed under the [GNU General Public License, version 3 only](LICENSE) (`GPL-3.0-only`).
+
+You may use, modify, and redistribute Word Snip, including commercially, under GPLv3. If you distribute the app or a modified version, you must provide the corresponding source code under GPLv3 and preserve the required copyright and license notices. The software is provided without warranty.
+
+Versions previously released under the MIT License remain available under their original MIT terms. This change does not revoke those permissions.

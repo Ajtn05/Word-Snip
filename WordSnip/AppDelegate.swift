@@ -138,14 +138,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // Let WindowServer remove the selection overlay before taking the screenshot.
                 try? await Task.sleep(for: .milliseconds(180))
                 do {
-                    let text = try await TextCapture.recognize(
+                    let result = try await TextCapture.recognize(
                         screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText
                     )
                     NSPasteboard.general.clearContents()
-                    guard NSPasteboard.general.setString(text, forType: .string) else {
+                    guard NSPasteboard.general.setString(result.string, forType: .string) else {
                         throw CaptureError.clipboardUnavailable
                     }
-                    self.showFeedback(on: screen)
+                    switch result {
+                    case .text: self.showFeedback("Text copied", on: screen)
+                    case .qrCode: self.showFeedback("QR code copied", on: screen)
+                    }
                 } catch {
                     self.showError(error.localizedDescription)
                 }
@@ -178,14 +181,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showError(_ message: String) {
         let alert = NSAlert()
-        alert.messageText = "Could not copy text"
+        alert.messageText = "Could not copy selection"
         alert.informativeText = message
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
     }
 
-    private func showFeedback(on screen: NSScreen) {
-        let title = NSTextField(labelWithString: "Text copied")
+    private func showFeedback(_ message: String, on screen: NSScreen) {
+        let title = NSTextField(labelWithString: message)
         title.font = .systemFont(ofSize: 14, weight: .semibold)
         title.textColor = .white
 

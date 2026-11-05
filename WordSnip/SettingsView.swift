@@ -131,7 +131,7 @@ struct SettingsView: View {
                     Text("Word Snip")
                         .font(SettingsFont.demi(24))
                         .padding(.top, 2)
-                    Text("Capture text from anywhere on your Mac")
+                    Text("Copy text and QR links from anywhere on your Mac")
                         .font(SettingsFont.regular(13))
                         .foregroundStyle(.secondary)
                 }
@@ -145,7 +145,7 @@ struct SettingsView: View {
                             settingIcon("keyboard")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Rectangle shortcut").font(SettingsFont.demi(14))
-                                Text("Drag a rectangle around text")
+                                Text("Drag a rectangle around text or a QR code")
                                     .font(SettingsFont.regular(11))
                                     .foregroundStyle(.secondary)
                             }
@@ -168,7 +168,7 @@ struct SettingsView: View {
                             settingIcon("lasso")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Freehand shortcut").font(SettingsFont.demi(14))
-                                Text("Draw around the text you want")
+                                Text("Draw around text or a QR code")
                                     .font(SettingsFont.regular(11))
                                     .foregroundStyle(.secondary)
                             }
@@ -299,7 +299,7 @@ struct SettingsView: View {
                     Divider()
                     captureButton("Capture freehand", symbol: "lasso", shortcut: model.freehandShortcut.title,
                                   action: onFreehandCapture)
-                        .help("Draw around text to capture it")
+                        .help("Start a freehand selection")
                 }
             }
             .padding(.horizontal, 27)

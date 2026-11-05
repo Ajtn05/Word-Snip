@@ -117,7 +117,9 @@ private final class SelectionView: NSView {
     init(frame: CGRect, mode: SelectionMode) {
         self.mode = mode
         hintText = NSAttributedString(
-            string: mode == .freehand ? "Draw around text  ·  Esc to cancel" : "Drag to select text  ·  Esc to cancel",
+            string: mode == .freehand
+                ? "Draw around text or a QR code  ·  Esc to cancel"
+                : "Drag to select text or a QR code  ·  Esc to cancel",
             attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .medium), .foregroundColor: NSColor.white]
         )
         super.init(frame: frame)

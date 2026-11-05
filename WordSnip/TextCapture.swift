@@ -6,21 +6,34 @@ import Vision
 enum CaptureError: LocalizedError {
     case displayUnavailable
     case invalidSelection
-    case noText
+    case nothingRecognized
+    case multipleQRCodes
     case clipboardUnavailable
 
     var errorDescription: String? {
         switch self {
         case .displayUnavailable: "The selected display is no longer available."
         case .invalidSelection: "The selected area could not be captured."
-        case .noText: "No text was found in the selected area."
-        case .clipboardUnavailable: "The recognized text could not be copied to the clipboard."
+        case .nothingRecognized: "No text or readable QR code was found in the selected area."
+        case .multipleQRCodes: "More than one QR code was found. Select one at a time."
+        case .clipboardUnavailable: "The capture could not be copied to the clipboard."
+        }
+    }
+}
+
+enum CaptureResult {
+    case text(String)
+    case qrCode(String)
+
+    var string: String {
+        switch self {
+        case .text(let string), .qrCode(let string): string
         }
     }
 }
 
 enum TextCapture {
-    static func recognize(screen: NSScreen, selection: SelectionArea, singleLine: Bool) async throws -> String {
+    static func recognize(screen: NSScreen, selection: SelectionArea, singleLine: Bool) async throws -> CaptureResult {
         guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
             throw CaptureError.displayUnavailable
         }
@@ -63,17 +76,30 @@ enum TextCapture {
             image = maskedImage
         }
 
+        return try recognize(image: image, singleLine: singleLine)
+    }
+
+    static func recognize(image: CGImage, singleLine: Bool) throws -> CaptureResult {
+        let handler = VNImageRequestHandler(cgImage: image)
+        let qrRequest = VNDetectBarcodesRequest()
+        qrRequest.symbologies = [.qr]
+        // Keep text capture available if Vision cannot scan the selection for QR codes.
+        try? handler.perform([qrRequest])
+        let payloads = (qrRequest.results ?? []).compactMap(\.payloadStringValue).filter { !$0.isEmpty }
+        guard payloads.count <= 1 else { throw CaptureError.multipleQRCodes }
+        if let payload = payloads.first { return .qrCode(payload) }
+
         let request = VNRecognizeTextRequest()
         request.recognitionLevel = .accurate
         request.usesLanguageCorrection = true
-        try VNImageRequestHandler(cgImage: image).perform([request])
+        try handler.perform([request])
         let lines = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
         let recognized = lines.joined(separator: "\n")
         let text = singleLine
             ? recognized.split(whereSeparator: \.isWhitespace).joined(separator: " ")
             : recognized.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { throw CaptureError.noText }
-        return text
+        guard !text.isEmpty else { throw CaptureError.nothingRecognized }
+        return .text(text)
     }
 
     private static func maskOutsideSelection(_ image: CGImage, points: [CGPoint], screen: NSScreen,

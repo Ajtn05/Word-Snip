@@ -5,14 +5,14 @@
 
   <p>because my girlfriend asked for it...</p>
   <p>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.5.0"><img alt="Release v1.5.0" src="https://img.shields.io/badge/release-v1.5.0-2f6feb"></a>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.5.0/Word-Snip-v1.5-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.6.0"><img alt="Release v1.6.0" src="https://img.shields.io/badge/release-v1.6.0-2f6feb"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.6.0/Word-Snip-v1.6-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
     <img alt="Requires macOS 14 or newer" src="https://img.shields.io/badge/macOS-14%2B-555555">
     <img alt="Apple silicon and Intel" src="https://img.shields.io/badge/Macs-Apple%20silicon%20%2B%20Intel-555555">
   </p>
 
-  <p><strong>Copy text from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
-  <p>Select an area of your screen. Word Snip recognizes the text with Apple Vision and copies it to your clipboard.</p>
+  <p><strong>Copy text and QR links from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
+  <p>Select an area of your screen. Word Snip uses Apple Vision to read it and copies the result to your clipboard.</p>
 </div>
 
 ## Demo
@@ -21,11 +21,13 @@
 
 [Watch the full demo](assets/word-snip-demo.mp4).
 
-## Capture text from your screen
+## Capture text or a QR code from your screen
 
 1. Press **⌃⇧2** to select a rectangle, or **⌃⇧3** to draw a freehand outline. You can change either shortcut in Settings.
-2. Drag around the text you want. The freehand outline closes when you release the mouse; text outside it is excluded.
-3. Paste the recognized text anywhere. Press **Esc** to cancel a selection.
+2. Drag around the text you want or enclose one full QR code. The freehand outline closes when you release the mouse; anything outside it is excluded.
+3. Paste the result. When the selection contains a readable QR code, Word Snip copies its contents, such as a link. Otherwise, it copies the recognized text. Press **Esc** to cancel a selection.
+
+If Word Snip finds more than one readable QR code, select a smaller area around the one you want.
 
 Word Snip can launch at login and has an optional menu bar icon. Its menu includes both capture modes. **⌃⌥,** opens Settings even when the icon is hidden.
 
@@ -41,7 +43,7 @@ To set either capture shortcut, open Settings, click its current shortcut, then 
 
 Word Snip runs on Apple silicon and Intel Macs with macOS 14 or newer.
 
-1. [Download Word Snip 1.5 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.5.0/Word-Snip-v1.5-macOS.zip).
+1. [Download Word Snip 1.6 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.6.0/Word-Snip-v1.6-macOS.zip).
 2. Open the downloaded ZIP file, then drag `Word Snip.app` into your **Applications** folder.
 3. Open **Word Snip** from **Applications**.
 
@@ -60,7 +62,7 @@ xcodegen generate
 
 The script builds and runs the signed development copy at `build/testing/Word Snip Testing.app`. Its name and bundle identifier differ from the release app, so each has its own Screen Recording permission. The test app stays at that path across rebuilds; grant permission to **Word Snip Testing** once, then fully quit and reopen it. Use `./scripts/test-app.sh build` to build without launching, `check` to verify the bundle, or `stop` to close it.
 
-To test a capture, run the script, then use **⌃⇧2** for a rectangle and **⌃⇧3** for a freehand outline. Check that the copied text pastes correctly and that text outside the freehand outline is excluded. `check` validates the app bundle and signing; the capture check is manual.
+To test a capture, run the script, then use **⌃⇧2** for a rectangle and **⌃⇧3** for a freehand outline. Check that copied text pastes correctly and that content outside the freehand outline is excluded. Select a QR code with a known link and check that the link pastes exactly as encoded. `check` validates the app bundle and signing; the capture check is manual.
 
 This workflow does not install or replace anything in `/Applications`. Prepare a release bundle only when a release is requested. Distribution to other Macs with normal Gatekeeper approval requires Developer ID signing and notarization.
 

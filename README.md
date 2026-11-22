@@ -12,7 +12,7 @@
   </p>
 
   <p><strong>Copy text and QR links from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
-  <p>Select an area of your screen. Word Snip uses Apple Vision to read it and copies the result to your clipboard.</p>
+  <p>Select an area of your screen. Word Snip uses Apple Vision to recognize text in multiple languages or read a QR code, then copies the result to your clipboard.</p>
 </div>
 
 ## Demo
@@ -27,18 +27,16 @@
 2. Drag around the text you want or enclose one full QR code. The freehand outline closes when you release the mouse; anything outside it is excluded.
 3. Paste the result. When the selection contains a readable QR code, Word Snip copies its contents, such as a link. Otherwise, it copies the recognized text. Press **Esc** to cancel a selection.
 
-If Word Snip finds more than one readable QR code, select a smaller area around the one you want.
-
 Word Snip can launch at login and has an optional menu bar icon. Its menu includes both capture modes. **⌃⌥,** opens Settings even when the icon is hidden.
 
-Word Snip detects the text language automatically. For short or ambiguous selections, you can pick a language under **Settings → Text language**. The picker lists the languages Apple Vision supports on your version of macOS.
+Word Snip detects the text language automatically. Depending on your macOS version, you can capture text in languages such as Chinese, Japanese, Korean, Thai, Russian, and Ukrainian. If a short or ambiguous selection comes out wrong, choose its language under **Settings → Text language** and capture it again.
 
 In Settings, turn on **Single-line text** to copy OCR results as one continuous line. It replaces line breaks and repeated whitespace with single spaces, making the text easier to paste into a document.
 
 To set either capture shortcut, open Settings, click its current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app or the other capture mode already uses that combination, Word Snip keeps your previous shortcut.
 
 <p align="center">
-  <img src="assets/word-snip-settings%20screenshot.png" alt="Word Snip Settings showing capture shortcuts, single-line text, menu bar icon, and launch at login" width="420">
+  <img src="assets/word-snip-settings%20screenshot.png" alt="Word Snip Settings showing the Text language picker set to Automatic and both capture shortcuts" width="420">
 </p>
  
 ## Download and install

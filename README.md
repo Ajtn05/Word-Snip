@@ -13,7 +13,7 @@
 
   <p><strong>Copy text and QR links from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
   <p>Select an area of your screen. Word Snip uses Apple Vision to recognize text in multiple languages or read a QR code, then copies the result to your clipboard.</p>
-  <p><a href="#scan-a-qr-code">Scan a QR code</a> · <a href="#capture-text-from-your-screen">Capture text</a> · <a href="#settings">Settings</a></p>
+  <p><a href="#scan-a-qr-code">Scan a QR code</a> · <a href="#scan-text">Scan text</a> · <a href="#settings">Settings</a></p>
 </div>
 
 ## Scan a QR code
@@ -26,17 +26,15 @@
   <img src="assets/word-snip-qr-capture.png" alt="Word Snip's rectangle selection around a QR code for the GitHub repository" width="560">
 </p>
 
-## Demo
+## Scan text
+
+1. Press **⌃⇧2** for a rectangle or **⌃⇧3** for a freehand outline.
+2. Enclose the text and release the mouse. Press **Esc** to cancel a selection.
+3. When **Text copied** appears, paste the recognized text.
 
 [![Word Snip selecting text from a book page and pasting the recognized text into a note](assets/word-snip-demo.gif)](assets/word-snip-demo.mp4)
 
-[Watch the full demo](assets/word-snip-demo.mp4).
-
-## Capture text from your screen
-
-1. Press **⌃⇧2** to select a rectangle, or **⌃⇧3** to draw a freehand outline. You can change either shortcut in Settings.
-2. Drag around the text you want. The freehand outline closes when you release the mouse.
-3. Paste the recognized text. Press **Esc** to cancel a selection.
+[Watch the full text scanning demo](assets/word-snip-demo.mp4).
 
 ## Settings
 

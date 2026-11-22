@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Copy text and QR codes from anywhere on your Mac with Word Snip. Free and open source for macOS 14 and later.">
+  <meta property="og:title" content="Word Snip">
+  <meta property="og:description" content="Select text or a QR code on your Mac and paste it wherever you need it.">
+  <title>Word Snip | Copy what’s on your screen</title>
+  <link rel="icon" href="assets/word-snip.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+  <script src="preview.js" defer></script>
+</head>
+<body id="top">
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="wordmark" href="#top">
+        <img src="assets/word-snip.png" width="36" height="36" alt="">
+        Word Snip
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#capture">How it works</a>
+        <a href="https://github.com/Ajtn05/Word-Snip">GitHub</a>
+      </nav>
+      <a class="button button-primary header-download" href="#download">Get Word Snip</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="wrap hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <h1 id="hero-title">Copy what’s on your screen.</h1>
+        <p>Grab a line from a lecture slide, a quote from an image, or a link from a QR code. Draw around it and Word Snip copies it to your clipboard.</p>
+        <div class="actions">
+          <a class="button button-primary" href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.7.0/Word-Snip-v1.7-macOS.zip">Download for macOS</a>
+          <a class="button button-secondary" href="#capture">See how it works</a>
+        </div>
+        <p class="platform">Free and open source <span aria-hidden="true">/</span> macOS 14 or later</p>
+      </div>
+
+      <div class="preview-stage" aria-label="Interactive capture preview">
+        <div class="preview-window" id="capture-preview">
+          <div class="preview-toolbar">
+            <span class="preview-label">
+              <img src="assets/word-snip.png" width="24" height="24" alt="">
+              Capture preview
+            </span>
+            <div class="mode-picker" role="group" aria-label="Selection shape" data-interactive hidden>
+              <button type="button" aria-pressed="true" data-mode="rectangle">Rectangle</button>
+              <button type="button" aria-pressed="false" data-mode="freehand">Freehand</button>
+            </div>
+          </div>
+          <div class="sample-page">
+            <div class="sample-paper">
+              <p class="sample-title">Project notes</p>
+              <p class="sample-text"><span id="sample-text" lang="ja">提出期限は金曜日です。</span></p>
+            </div>
+          </div>
+          <div class="clipboard-preview">
+            <div>
+              <p class="clipboard-label">Clipboard preview</p>
+              <p class="clipboard-text" lang="ja">提出期限は金曜日です。</p>
+            </div>
+            <button class="button button-secondary copy-button" type="button" data-interactive hidden>Copy sample</button>
+          </div>
+          <p class="copy-status" role="status"></p>
+        </div>
+      </div>
+    </section>
+
+    <section class="wrap language-feature" aria-labelledby="languages-title">
+      <div>
+        <h2 id="languages-title">Copy text in its original language.</h2>
+        <p>Word Snip detects the language as you capture. For a short or ambiguous selection, pick its language in <strong>Settings → Text language</strong> and try the capture again.</p>
+        <p>Available languages depend on your version of macOS. They can include Chinese, Japanese, Korean, Thai, Russian, and Ukrainian.</p>
+      </div>
+      <figure>
+        <a href="assets/settings.png">
+          <img src="assets/settings.png" width="1080" height="1580" loading="lazy" alt="Word Snip settings with Text language set to Automatic">
+        </a>
+        <figcaption>The Text language picker in Word Snip Settings.</figcaption>
+      </figure>
+    </section>
+
+    <section class="wrap capture-section" id="capture" aria-labelledby="capture-title">
+      <h2 id="capture-title">Select it. Paste it.</h2>
+      <div class="capture-options">
+        <article class="capture-option rectangle-option">
+          <kbd aria-label="Control Shift 2">⌃⇧2</kbd>
+          <h3>Draw a rectangle</h3>
+          <p>Drag a box around a paragraph, a slide title, or a line from an image. Release to copy the text.</p>
+        </article>
+        <article class="capture-option freehand-option">
+          <kbd aria-label="Control Shift 3">⌃⇧3</kbd>
+          <h3>Draw freehand</h3>
+          <p>Trace around the text you want. The outline closes when you release the mouse.</p>
+        </article>
+        <article class="capture-option qr-option">
+          <h3>Scan a QR code</h3>
+          <p>Use either capture mode to enclose one full QR code. Paste its link or other contents from the clipboard.</p>
+          <a href="https://github.com/Ajtn05/Word-Snip#scan-a-qr-code">See a QR capture</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="wrap download-section" id="download" aria-labelledby="download-title">
+      <div>
+        <h2 id="download-title">Get Word Snip</h2>
+        <p>Version 1.7.0 for Apple silicon and Intel Macs running macOS 14 or later.</p>
+        <div class="actions">
+          <a class="button button-primary" href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.7.0/Word-Snip-v1.7-macOS.zip">Download for macOS</a>
+          <a class="button button-secondary" href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.7.0">Release notes</a>
+        </div>
+      </div>
+      <div class="install-instructions">
+        <h3>Set up the Mac app</h3>
+        <ol>
+          <li>Open the ZIP, drag Word Snip into Applications, and open it from there.</li>
+          <li>The app uses Apple Development signing and ships without notarization. If macOS blocks it, choose <strong>Open Anyway</strong> in <strong>System Settings → Privacy &amp; Security</strong>.</li>
+          <li>Allow Screen &amp; System Audio Recording when prompted, then quit and reopen Word Snip.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p>Word Snip is open source under GPL-3.0-only.</p>
+      <a href="https://github.com/Ajtn05/Word-Snip">GitHub</a>
+    </div>
+  </footer>
+</body>
+</html>

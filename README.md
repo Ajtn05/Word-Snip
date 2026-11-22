@@ -13,7 +13,7 @@
 
   <p><strong>Copy text and QR links from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
   <p>Select an area of your screen. Word Snip uses Apple Vision to recognize text in multiple languages or read a QR code, then copies the result to your clipboard.</p>
-  <p><a href="#scan-a-qr-code">Scan a QR code</a> · <a href="#scan-text">Scan text</a> · <a href="#settings">Settings</a></p>
+  <p><a href="https://word-snip.velvetoats32.chatgpt.site">Product site</a> · <a href="#scan-a-qr-code">Scan a QR code</a> · <a href="#scan-text">Scan text</a> · <a href="#settings">Settings</a></p>
 </div>
 
 ## Scan a QR code
@@ -23,7 +23,9 @@
 3. When **QR code copied** appears, paste the code's contents, such as a link.
 
 <p align="center">
-  <img src="assets/word-snip-qr-capture.png" alt="Word Snip's rectangle selection around a QR code for the GitHub repository" width="560">
+  <a href="https://word-snip.velvetoats32.chatgpt.site">
+    <img src="assets/word-snip-product-qr.png" alt="Word Snip selecting a QR code that opens the product site" width="560">
+  </a>
 </p>
 
 ## Scan text

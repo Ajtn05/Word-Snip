@@ -13,7 +13,18 @@
 
   <p><strong>Copy text and QR links from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
   <p>Select an area of your screen. Word Snip uses Apple Vision to recognize text in multiple languages or read a QR code, then copies the result to your clipboard.</p>
+  <p><a href="#scan-a-qr-code">Scan a QR code</a> · <a href="#capture-text-from-your-screen">Capture text</a> · <a href="#settings">Settings</a></p>
 </div>
+
+## Scan a QR code
+
+1. Press **⌃⇧2** for a rectangle or **⌃⇧3** for a freehand outline.
+2. Enclose one full QR code and release the mouse.
+3. When **QR code copied** appears, paste the code's contents, such as a link.
+
+<p align="center">
+  <img src="assets/word-snip-qr-capture.png" alt="Word Snip's rectangle selection around a QR code for the GitHub repository" width="560">
+</p>
 
 ## Demo
 
@@ -21,11 +32,13 @@
 
 [Watch the full demo](assets/word-snip-demo.mp4).
 
-## Capture text or a QR code from your screen
+## Capture text from your screen
 
 1. Press **⌃⇧2** to select a rectangle, or **⌃⇧3** to draw a freehand outline. You can change either shortcut in Settings.
-2. Drag around the text you want or enclose one full QR code. The freehand outline closes when you release the mouse; anything outside it is excluded.
-3. Paste the result. When the selection contains a readable QR code, Word Snip copies its contents, such as a link. Otherwise, it copies the recognized text. Press **Esc** to cancel a selection.
+2. Drag around the text you want. The freehand outline closes when you release the mouse.
+3. Paste the recognized text. Press **Esc** to cancel a selection.
+
+## Settings
 
 Word Snip can launch at login and has an optional menu bar icon. Its menu includes both capture modes. **⌃⌥,** opens Settings even when the icon is hidden.
 
@@ -36,7 +49,7 @@ In Settings, turn on **Single-line text** to copy OCR results as one continuous 
 To set either capture shortcut, open Settings, click its current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app or the other capture mode already uses that combination, Word Snip keeps your previous shortcut.
 
 <p align="center">
-  <img src="assets/word-snip-settings%20screenshot.png" alt="Word Snip Settings showing the Text language picker set to Automatic and both capture shortcuts" width="420">
+  <img src="assets/word-snip-settings-1.7.png" alt="Word Snip 1.7 Settings showing the Text language picker set to Automatic and both capture shortcuts" width="420">
 </p>
  
 ## Download and install

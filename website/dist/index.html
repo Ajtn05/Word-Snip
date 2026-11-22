@@ -52,16 +52,32 @@
           </div>
           <div class="sample-page">
             <div class="sample-paper">
-              <p class="sample-title">Project notes</p>
-              <p class="sample-text"><span id="sample-text" lang="ja">提出期限は金曜日です。</span></p>
+              <div class="sample-heading">
+                <p class="sample-title">Lecture notes</p>
+                <button class="preview-action edit-sample" type="button" data-interactive hidden>Edit text</button>
+              </div>
+              <p class="sample-text"><span id="sample-text" dir="auto">The mitochondria is the powerhouse of the cell. Energy is produced through a process called cellular respiration.</span></p>
+              <form class="sample-editor" hidden>
+                <label for="sample-input">Sample text</label>
+                <textarea id="sample-input" dir="auto" rows="4" maxlength="400"></textarea>
+                <div class="editor-actions">
+                  <button class="preview-action cancel-edit" type="button">Cancel</button>
+                  <button class="button button-primary save-sample" type="submit">Done</button>
+                </div>
+              </form>
             </div>
+            <p class="sample-hint" data-interactive hidden>Draw around any part of the text to copy it.</p>
+            <canvas class="selection-layer" aria-hidden="true"></canvas>
           </div>
           <div class="clipboard-preview">
             <div>
               <p class="clipboard-label">Clipboard preview</p>
-              <p class="clipboard-text" lang="ja">提出期限は金曜日です。</p>
+              <p class="clipboard-text" dir="auto">The mitochondria is the powerhouse of the cell. Energy is produced through a process called cellular respiration.</p>
             </div>
-            <button class="button button-secondary copy-button" type="button" data-interactive hidden>Copy sample</button>
+            <div class="clipboard-actions">
+              <button class="preview-action select-all" type="button" hidden>Select all</button>
+              <button class="button button-secondary copy-button" type="button" data-interactive hidden>Copy sample</button>
+            </div>
           </div>
           <p class="copy-status" role="status"></p>
         </div>

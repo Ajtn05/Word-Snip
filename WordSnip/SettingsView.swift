@@ -8,6 +8,7 @@ final class SettingsModel: ObservableObject {
     @Published var freehandShortcut: CaptureShortcut
     @Published var showMenuBarIcon: Bool
     @Published var singleLineText: Bool
+    @Published private(set) var recognitionLanguage: String?
     @Published var launchAtLogin: Bool
     @Published var message: String?
     @Published var isRecordingShortcut = false
@@ -36,6 +37,10 @@ final class SettingsModel: ObservableObject {
         }
         showMenuBarIcon = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
         singleLineText = UserDefaults.standard.bool(forKey: "singleLineText")
+        if let savedLanguage = UserDefaults.standard.string(forKey: "recognitionLanguage"),
+           TextCapture.supportedRecognitionLanguages.contains(savedLanguage) {
+            recognitionLanguage = savedLanguage
+        }
         launchAtLogin = SMAppService.mainApp.status == .enabled
     }
 
@@ -95,6 +100,11 @@ final class SettingsModel: ObservableObject {
         UserDefaults.standard.set(value, forKey: "singleLineText")
     }
 
+    func setRecognitionLanguage(_ value: String?) {
+        recognitionLanguage = value
+        UserDefaults.standard.set(value, forKey: "recognitionLanguage")
+    }
+
     func setLaunchAtLogin(_ value: Bool) {
         do {
             if value { try SMAppService.mainApp.register() }
@@ -110,6 +120,9 @@ final class SettingsModel: ObservableObject {
 
 struct SettingsView: View {
     static let windowSize = CGSize(width: 540, height: 790)
+    private static let recognitionLanguages = TextCapture.supportedRecognitionLanguages.map { identifier in
+        (identifier: identifier, name: Locale.current.localizedString(forIdentifier: identifier) ?? identifier)
+    }.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
 
     @ObservedObject var model: SettingsModel
     var onCapture: () -> Void
@@ -117,11 +130,8 @@ struct SettingsView: View {
     var onRecordingChange: (Bool) -> Void
 
     var body: some View {
-        ZStack {
-            Color(nsColor: .windowBackgroundColor)
-                .ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 21) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 15) {
                 VStack(spacing: 7) {
                     Image(systemName: "text.viewfinder")
                         .font(.system(size: 31, weight: .medium))
@@ -160,7 +170,7 @@ struct SettingsView: View {
                                              })
                                 .frame(width: 160, height: 36)
                         }
-                        .padding(.vertical, 15)
+                        .padding(.vertical, 13)
 
                         Divider().padding(.leading, 43)
 
@@ -183,7 +193,7 @@ struct SettingsView: View {
                                              })
                                 .frame(width: 160, height: 36)
                         }
-                        .padding(.vertical, 15)
+                        .padding(.vertical, 13)
 
                         Divider().padding(.leading, 43)
 
@@ -217,6 +227,33 @@ struct SettingsView: View {
                     sectionLabel("PREFERENCES")
                     VStack(spacing: 0) {
                         Divider()
+                        if !Self.recognitionLanguages.isEmpty {
+                            HStack(spacing: 13) {
+                                settingIcon("character.bubble")
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text("Text language").font(SettingsFont.demi(14))
+                                    Text("Choose a language if detection misses it")
+                                        .font(SettingsFont.regular(11))
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 8)
+                                Picker("Text language", selection: Binding(
+                                    get: { model.recognitionLanguage },
+                                    set: { model.setRecognitionLanguage($0) }
+                                )) {
+                                    Text("Automatic").tag(nil as String?)
+                                    ForEach(Self.recognitionLanguages, id: \.identifier) { language in
+                                        Text(language.name).tag(Optional(language.identifier))
+                                    }
+                                }
+                                .labelsHidden()
+                                .pickerStyle(.menu)
+                                .frame(width: 180, alignment: .trailing)
+                            }
+                            .padding(.vertical, 11)
+                            Divider().padding(.leading, 43)
+                        }
+
                         HStack(spacing: 13) {
                             settingIcon("text.alignleft")
                             VStack(alignment: .leading, spacing: 3) {
@@ -233,7 +270,7 @@ struct SettingsView: View {
                             .labelsHidden()
                             .tint(.gray)
                         }
-                        .padding(.vertical, 15)
+                        .padding(.vertical, 11)
 
                         Divider().padding(.leading, 43)
 
@@ -253,7 +290,7 @@ struct SettingsView: View {
                             .labelsHidden()
                             .tint(.gray)
                         }
-                        .padding(.vertical, 15)
+                        .padding(.vertical, 11)
 
                         Divider().padding(.leading, 43)
 
@@ -273,7 +310,7 @@ struct SettingsView: View {
                             .labelsHidden()
                             .tint(.gray)
                         }
-                        .padding(.vertical, 15)
+                        .padding(.vertical, 11)
                         Divider()
                     }
                 }
@@ -286,9 +323,7 @@ struct SettingsView: View {
                 }
                 .font(SettingsFont.regular(11))
                 .foregroundStyle(model.message == nil ? Color.secondary : Color.red)
-                .frame(minHeight: 30, alignment: .topLeading)
-
-                Spacer(minLength: 0)
+                .frame(minHeight: 22, alignment: .topLeading)
 
                 VStack(spacing: 0) {
                     Divider()
@@ -307,6 +342,7 @@ struct SettingsView: View {
             .padding(.top, 25)
         }
         .frame(width: Self.windowSize.width, height: Self.windowSize.height)
+        .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
     }
 
     private func sectionLabel(_ title: String) -> some View {
@@ -345,7 +381,7 @@ struct SettingsView: View {
                     .padding(.leading, 6)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 15)
+            .padding(.vertical, 12)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

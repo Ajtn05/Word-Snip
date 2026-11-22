@@ -33,7 +33,10 @@ enum CaptureResult {
 }
 
 enum TextCapture {
-    static func recognize(screen: NSScreen, selection: SelectionArea, singleLine: Bool) async throws -> CaptureResult {
+    static let supportedRecognitionLanguages = (try? makeTextRequest().supportedRecognitionLanguages()) ?? []
+
+    static func recognize(screen: NSScreen, selection: SelectionArea, singleLine: Bool,
+                          recognitionLanguage: String? = nil) async throws -> CaptureResult {
         guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
             throw CaptureError.displayUnavailable
         }
@@ -76,10 +79,10 @@ enum TextCapture {
             image = maskedImage
         }
 
-        return try recognize(image: image, singleLine: singleLine)
+        return try recognize(image: image, singleLine: singleLine, recognitionLanguage: recognitionLanguage)
     }
 
-    static func recognize(image: CGImage, singleLine: Bool) throws -> CaptureResult {
+    static func recognize(image: CGImage, singleLine: Bool, recognitionLanguage: String? = nil) throws -> CaptureResult {
         let handler = VNImageRequestHandler(cgImage: image)
         let qrRequest = VNDetectBarcodesRequest()
         qrRequest.symbologies = [.qr]
@@ -89,9 +92,12 @@ enum TextCapture {
         guard payloads.count <= 1 else { throw CaptureError.multipleQRCodes }
         if let payload = payloads.first { return .qrCode(payload) }
 
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = true
+        let request = makeTextRequest()
+        if let recognitionLanguage, supportedRecognitionLanguages.contains(recognitionLanguage) {
+            request.recognitionLanguages = [recognitionLanguage]
+        } else {
+            request.automaticallyDetectsLanguage = true
+        }
         try handler.perform([request])
         let lines = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
         let recognized = lines.joined(separator: "\n")
@@ -100,6 +106,13 @@ enum TextCapture {
             : recognized.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !text.isEmpty else { throw CaptureError.nothingRecognized }
         return .text(text)
+    }
+
+    private static func makeTextRequest() -> VNRecognizeTextRequest {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+        return request
     }
 
     private static func maskOutsideSelection(_ image: CGImage, points: [CGPoint], screen: NSScreen,

@@ -139,7 +139,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 try? await Task.sleep(for: .milliseconds(180))
                 do {
                     let result = try await TextCapture.recognize(
-                        screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText
+                        screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText,
+                        recognitionLanguage: self.settingsModel.recognitionLanguage
                     )
                     NSPasteboard.general.clearContents()
                     guard NSPasteboard.general.setString(result.string, forType: .string) else {

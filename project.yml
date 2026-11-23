@@ -18,8 +18,8 @@ targets:
       path: WordSnip/Info.plist
       properties:
         CFBundleDisplayName: $(PRODUCT_NAME)
-        CFBundleShortVersionString: "1.7"
-        CFBundleVersion: "7"
+        CFBundleShortVersionString: "1.8"
+        CFBundleVersion: "8"
         LSUIElement: true
         NSHighResolutionCapable: true
         NSScreenCaptureUsageDescription: Word Snip reads the selected area of your screen to copy text or QR codes.

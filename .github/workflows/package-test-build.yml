@@ -1,0 +1,44 @@
+name: Package Word Snip test build
+
+on:
+  push:
+    branches: ['test-build/ocr-spacing-3da3c6e-*']
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build, sign, and package
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project WordSnip.xcodeproj \
+            -scheme WordSnip \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/word-snip-build" \
+            'PRODUCT_NAME=Word Snip Testing' \
+            PRODUCT_BUNDLE_IDENTIFIER=com.aldrinnellas.wordsnip.testing \
+            CODE_SIGNING_ALLOWED=NO \
+            'ARCHS=arm64 x86_64' ONLY_ACTIVE_ARCH=NO \
+            build
+          app="$RUNNER_TEMP/word-snip-build/Build/Products/Release/Word Snip Testing.app"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Contents/Info.plist" |
+            grep -Fx com.aldrinnellas.wordsnip.testing
+          lipo -verify_arch arm64 x86_64 "$app/Contents/MacOS/Word Snip Testing"
+          codesign --force --deep --sign - "$app"
+          codesign --verify --deep --strict "$app"
+          ditto -c -k --keepParent "$app" Word-Snip-Testing-3da3c6e-macOS.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Word-Snip-Testing-3da3c6e-macOS
+          path: Word-Snip-Testing-3da3c6e-macOS.zip
+          if-no-files-found: error
+          retention-days: 7

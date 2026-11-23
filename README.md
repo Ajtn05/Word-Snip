@@ -46,6 +46,8 @@ Word Snip detects the text language automatically. Depending on your macOS versi
 
 In Settings, turn on **Single-line text** to copy OCR results as one continuous line. It replaces line breaks and repeated whitespace with single spaces, making the text easier to paste into a document.
 
+For addresses and lists, turn off **Single-line text** and turn on **Collapse extra spaces**. Word Snip replaces runs of spaces with one space and keeps the line breaks. With both settings off, Word Snip preserves the recognized spacing and trims whitespace from the outside of the result.
+
 To set either capture shortcut, open Settings, click its current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app or the other capture mode already uses that combination, Word Snip keeps your previous shortcut.
 
 <p align="center">

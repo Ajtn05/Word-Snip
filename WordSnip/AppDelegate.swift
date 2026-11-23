@@ -140,6 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 do {
                     let result = try await TextCapture.recognize(
                         screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText,
+                        collapseSpaces: self.settingsModel.collapseOCRSpaces,
                         recognitionLanguage: self.settingsModel.recognitionLanguage
                     )
                     NSPasteboard.general.clearContents()

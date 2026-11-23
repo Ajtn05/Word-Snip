@@ -35,7 +35,7 @@ enum CaptureResult {
 enum TextCapture {
     static let supportedRecognitionLanguages = (try? makeTextRequest().supportedRecognitionLanguages()) ?? []
 
-    static func recognize(screen: NSScreen, selection: SelectionArea, singleLine: Bool,
+    static func recognize(screen: NSScreen, selection: SelectionArea, singleLine: Bool, collapseSpaces: Bool = false,
                           recognitionLanguage: String? = nil) async throws -> CaptureResult {
         guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
             throw CaptureError.displayUnavailable
@@ -79,10 +79,12 @@ enum TextCapture {
             image = maskedImage
         }
 
-        return try recognize(image: image, singleLine: singleLine, recognitionLanguage: recognitionLanguage)
+        return try recognize(image: image, singleLine: singleLine, collapseSpaces: collapseSpaces,
+                             recognitionLanguage: recognitionLanguage)
     }
 
-    static func recognize(image: CGImage, singleLine: Bool, recognitionLanguage: String? = nil) throws -> CaptureResult {
+    static func recognize(image: CGImage, singleLine: Bool, collapseSpaces: Bool = false,
+                          recognitionLanguage: String? = nil) throws -> CaptureResult {
         let handler = VNImageRequestHandler(cgImage: image)
         let qrRequest = VNDetectBarcodesRequest()
         qrRequest.symbologies = [.qr]
@@ -100,12 +102,21 @@ enum TextCapture {
         }
         try handler.perform([request])
         let lines = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string }
-        let recognized = lines.joined(separator: "\n")
-        let text = singleLine
-            ? recognized.split(whereSeparator: \.isWhitespace).joined(separator: " ")
-            : recognized.trimmingCharacters(in: .whitespacesAndNewlines)
+        let text = formatRecognizedText(lines.joined(separator: "\n"), singleLine: singleLine,
+                                        collapseSpaces: collapseSpaces)
         guard !text.isEmpty else { throw CaptureError.nothingRecognized }
         return .text(text)
+    }
+
+    private static func formatRecognizedText(_ text: String, singleLine: Bool, collapseSpaces: Bool) -> String {
+        if singleLine {
+            return text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if collapseSpaces {
+            return trimmed.replacingOccurrences(of: " {2,}", with: " ", options: .regularExpression)
+        }
+        return trimmed
     }
 
     private static func makeTextRequest() -> VNRecognizeTextRequest {

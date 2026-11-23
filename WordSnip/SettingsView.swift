@@ -8,6 +8,7 @@ final class SettingsModel: ObservableObject {
     @Published var freehandShortcut: CaptureShortcut
     @Published var showMenuBarIcon: Bool
     @Published var singleLineText: Bool
+    @Published private(set) var collapseOCRSpaces: Bool
     @Published private(set) var recognitionLanguage: String?
     @Published var launchAtLogin: Bool
     @Published var message: String?
@@ -37,6 +38,7 @@ final class SettingsModel: ObservableObject {
         }
         showMenuBarIcon = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
         singleLineText = UserDefaults.standard.bool(forKey: "singleLineText")
+        collapseOCRSpaces = UserDefaults.standard.bool(forKey: "collapseOCRSpaces")
         if let savedLanguage = UserDefaults.standard.string(forKey: "recognitionLanguage"),
            TextCapture.supportedRecognitionLanguages.contains(savedLanguage) {
             recognitionLanguage = savedLanguage
@@ -98,6 +100,11 @@ final class SettingsModel: ObservableObject {
     func setSingleLineText(_ value: Bool) {
         singleLineText = value
         UserDefaults.standard.set(value, forKey: "singleLineText")
+    }
+
+    func setCollapseOCRSpaces(_ value: Bool) {
+        collapseOCRSpaces = value
+        UserDefaults.standard.set(value, forKey: "collapseOCRSpaces")
     }
 
     func setRecognitionLanguage(_ value: String?) {
@@ -269,6 +276,27 @@ struct SettingsView: View {
                             ))
                             .labelsHidden()
                             .tint(.gray)
+                        }
+                        .padding(.vertical, 11)
+
+                        Divider().padding(.leading, 43)
+
+                        HStack(spacing: 13) {
+                            settingIcon("text.alignleft")
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Collapse extra spaces").font(SettingsFont.demi(14))
+                                Text("Replace repeated spaces while keeping line breaks")
+                                    .font(SettingsFont.regular(11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Toggle("Collapse extra spaces", isOn: Binding(
+                                get: { model.collapseOCRSpaces },
+                                set: { model.setCollapseOCRSpaces($0) }
+                            ))
+                            .labelsHidden()
+                            .tint(.gray)
+                            .disabled(model.singleLineText)
                         }
                         .padding(.vertical, 11)
 

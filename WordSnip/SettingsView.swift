@@ -1,6 +1,9 @@
 import AppKit
 import ServiceManagement
 import SwiftUI
+#if canImport(Translation)
+import Translation
+#endif
 
 @MainActor
 final class SettingsModel: ObservableObject {
@@ -10,6 +13,8 @@ final class SettingsModel: ObservableObject {
     @Published var singleLineText: Bool
     @Published private(set) var collapseOCRSpaces: Bool
     @Published private(set) var recognitionLanguage: String?
+    @Published var translateSelectedText: Bool
+    @Published var translationTargetLanguage: String
     @Published var launchAtLogin: Bool
     @Published var message: String?
     @Published var isRecordingShortcut = false
@@ -39,6 +44,18 @@ final class SettingsModel: ObservableObject {
         showMenuBarIcon = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
         singleLineText = UserDefaults.standard.bool(forKey: "singleLineText")
         collapseOCRSpaces = UserDefaults.standard.bool(forKey: "collapseOCRSpaces")
+        if #available(macOS 15.0, *) {
+            translateSelectedText = UserDefaults.standard.bool(forKey: "translateSelectedText")
+            if let saved = UserDefaults.standard.string(forKey: "translationTargetLanguage"), !saved.isEmpty {
+                translationTargetLanguage = saved
+            } else {
+                translationTargetLanguage = "en"
+            }
+        } else {
+            translateSelectedText = false
+            translationTargetLanguage = "en"
+            UserDefaults.standard.removeObject(forKey: "translateSelectedText")
+        }
         if let savedLanguage = UserDefaults.standard.string(forKey: "recognitionLanguage"),
            TextCapture.supportedRecognitionLanguages.contains(savedLanguage) {
             recognitionLanguage = savedLanguage
@@ -112,6 +129,21 @@ final class SettingsModel: ObservableObject {
         UserDefaults.standard.set(value, forKey: "recognitionLanguage")
     }
 
+    func setTranslateSelectedText(_ value: Bool) {
+        if #available(macOS 15.0, *) {
+            translateSelectedText = value
+            UserDefaults.standard.set(value, forKey: "translateSelectedText")
+        } else {
+            translateSelectedText = false
+            UserDefaults.standard.removeObject(forKey: "translateSelectedText")
+        }
+    }
+
+    func setTranslationTargetLanguage(_ value: String) {
+        translationTargetLanguage = value
+        UserDefaults.standard.set(value, forKey: "translationTargetLanguage")
+    }
+
     func setLaunchAtLogin(_ value: Bool) {
         do {
             if value { try SMAppService.mainApp.register() }
@@ -135,6 +167,7 @@ struct SettingsView: View {
     var onCapture: () -> Void
     var onFreehandCapture: () -> Void
     var onRecordingChange: (Bool) -> Void
+    @State private var translationLanguages: [Locale.Language] = []
 
     var body: some View {
         ScrollView {
@@ -303,6 +336,53 @@ struct SettingsView: View {
                         Divider().padding(.leading, 43)
 
                         HStack(spacing: 13) {
+                            settingIcon("translate")
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Translate selected text").font(SettingsFont.demi(14))
+                                Text(translationAvailable ? "Auto-detect source language and show an overlay" : "Requires macOS 15 or later")
+                                    .font(SettingsFont.regular(11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Toggle("Translate selected text", isOn: Binding(
+                                get: { model.translateSelectedText },
+                                set: { model.setTranslateSelectedText($0) }
+                            ))
+                            .labelsHidden()
+                            .tint(.gray)
+                            .disabled(!translationAvailable)
+                        }
+                        .padding(.vertical, 11)
+
+                        Divider().padding(.leading, 43)
+
+                        HStack(spacing: 13) {
+                            settingIcon("globe")
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("Translation target").font(SettingsFont.demi(14))
+                                Text("Language to translate into")
+                                    .font(SettingsFont.regular(11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 8)
+                            Picker("Translation target", selection: Binding(
+                                get: { model.translationTargetLanguage },
+                                set: { model.setTranslationTargetLanguage($0) }
+                            )) {
+                                ForEach(translationLanguageOptions, id: \.self) { language in
+                                    Text(translationLanguageName(language)).tag(language.minimalIdentifier)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .frame(width: 180, alignment: .trailing)
+                            .disabled(!translationAvailable || !model.translateSelectedText)
+                        }
+                        .padding(.vertical, 11)
+
+                        Divider().padding(.leading, 43)
+
+                        HStack(spacing: 13) {
                             settingIcon("menubar.rectangle")
                             VStack(alignment: .leading, spacing: 3) {
                                 Text("Menu bar icon").font(SettingsFont.demi(14))
@@ -369,8 +449,26 @@ struct SettingsView: View {
             .padding(.bottom, 27)
             .padding(.top, 25)
         }
+        .task { await loadTranslationLanguages() }
         .frame(width: Self.windowSize.width, height: Self.windowSize.height)
         .background(Color(nsColor: .windowBackgroundColor).ignoresSafeArea())
+    }
+
+    private var translationAvailable: Bool {
+        if #available(macOS 15.0, *) { return true }
+        return false
+    }
+
+    private var translationLanguageOptions: [Locale.Language] {
+        var languages = translationLanguages
+        let current = Locale.Language(identifier: model.translationTargetLanguage)
+        if !languages.contains(current) { languages.append(current) }
+        if languages.isEmpty { languages = [Locale.Language(identifier: "en")] }
+        return languages.sorted { translationLanguageName($0).localizedStandardCompare(translationLanguageName($1)) == .orderedAscending }
+    }
+
+    private func translationLanguageName(_ language: Locale.Language) -> String {
+        Locale.current.localizedString(forIdentifier: language.minimalIdentifier) ?? language.minimalIdentifier
     }
 
     private func sectionLabel(_ title: String) -> some View {
@@ -413,6 +511,16 @@ struct SettingsView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+extension SettingsView {
+    private func loadTranslationLanguages() async {
+        if #available(macOS 15.0, *) {
+            let availability = LanguageAvailability()
+            let languages = await availability.supportedLanguages
+            await MainActor.run { translationLanguages = languages }
+        }
     }
 }
 

@@ -36,7 +36,7 @@ enum TextCapture {
     static let supportedRecognitionLanguages = (try? makeTextRequest().supportedRecognitionLanguages()) ?? []
 
     static func recognize(screen: NSScreen, selection: SelectionArea, singleLine: Bool, collapseSpaces: Bool = false,
-                          recognitionLanguage: String? = nil) async throws -> CaptureResult {
+                          recognitionLanguage: String? = nil, skipQRCodeDetection: Bool = false) async throws -> CaptureResult {
         guard let screenNumber = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
             throw CaptureError.displayUnavailable
         }
@@ -80,19 +80,21 @@ enum TextCapture {
         }
 
         return try recognize(image: image, singleLine: singleLine, collapseSpaces: collapseSpaces,
-                             recognitionLanguage: recognitionLanguage)
+                             recognitionLanguage: recognitionLanguage, skipQRCodeDetection: skipQRCodeDetection)
     }
 
     static func recognize(image: CGImage, singleLine: Bool, collapseSpaces: Bool = false,
-                          recognitionLanguage: String? = nil) throws -> CaptureResult {
+                          recognitionLanguage: String? = nil, skipQRCodeDetection: Bool = false) throws -> CaptureResult {
         let handler = VNImageRequestHandler(cgImage: image)
-        let qrRequest = VNDetectBarcodesRequest()
-        qrRequest.symbologies = [.qr]
-        // Keep text capture available if Vision cannot scan the selection for QR codes.
-        try? handler.perform([qrRequest])
-        let payloads = (qrRequest.results ?? []).compactMap(\.payloadStringValue).filter { !$0.isEmpty }
-        guard payloads.count <= 1 else { throw CaptureError.multipleQRCodes }
-        if let payload = payloads.first { return .qrCode(payload) }
+        if !skipQRCodeDetection {
+            let qrRequest = VNDetectBarcodesRequest()
+            qrRequest.symbologies = [.qr]
+            // Keep text capture available if Vision cannot scan the selection for QR codes.
+            try? handler.perform([qrRequest])
+            let payloads = (qrRequest.results ?? []).compactMap(\.payloadStringValue).filter { !$0.isEmpty }
+            guard payloads.count <= 1 else { throw CaptureError.multipleQRCodes }
+            if let payload = payloads.first { return .qrCode(payload) }
+        }
 
         let request = makeTextRequest()
         if let recognitionLanguage, supportedRecognitionLanguages.contains(recognitionLanguage) {

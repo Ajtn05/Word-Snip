@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var overlay: SelectionOverlay?
+    private var translationOverlayController: Any?
     private var isCapturing = false
     private var isRecordingShortcut = false
 
@@ -75,6 +76,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.overlay = nil
             isCapturing = false
         }
+        if #available(macOS 15.0, *) {
+            (translationOverlayController as? TranslationOverlayController)?.close()
+            translationOverlayController = nil
+        }
         if settingsWindow == nil {
             let hosting = NSHostingView(rootView: SettingsView(model: settingsModel, onCapture: { [weak self] in
                 self?.captureFromSettings(mode: .rectangle)
@@ -119,6 +124,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self.overlay = nil
             isCapturing = false
         }
+        if #available(macOS 15.0, *) {
+            (translationOverlayController as? TranslationOverlayController)?.close()
+            translationOverlayController = nil
+        }
         guard !isCapturing else { return }
         guard CGPreflightScreenCaptureAccess() || CGRequestScreenCaptureAccess() else {
             showPermissionAlert()
@@ -138,18 +147,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // Let WindowServer remove the selection overlay before taking the screenshot.
                 try? await Task.sleep(for: .milliseconds(180))
                 do {
+                    let translateMode = self.settingsModel.translateSelectedText
                     let result = try await TextCapture.recognize(
                         screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText,
                         collapseSpaces: self.settingsModel.collapseOCRSpaces,
-                        recognitionLanguage: self.settingsModel.recognitionLanguage
+                        recognitionLanguage: translateMode ? nil : self.settingsModel.recognitionLanguage,
+                        skipQRCodeDetection: translateMode
                     )
-                    NSPasteboard.general.clearContents()
-                    guard NSPasteboard.general.setString(result.string, forType: .string) else {
-                        throw CaptureError.clipboardUnavailable
-                    }
-                    switch result {
-                    case .text: self.showFeedback("Text copied", on: screen)
-                    case .qrCode: self.showFeedback("QR code copied", on: screen)
+                    if translateMode {
+                        if case .text(let text) = result {
+                            if #available(macOS 15.0, *) {
+                                let controller = TranslationOverlayController()
+                                controller.show(
+                                    originalText: text,
+                                    selectionBounds: selection.bounds,
+                                    screen: screen,
+                                    targetLanguageIdentifier: self.settingsModel.translationTargetLanguage,
+                                    onTargetChange: { [weak model = self.settingsModel] identifier in
+                                        model?.setTranslationTargetLanguage(identifier)
+                                    }
+                                )
+                                self.translationOverlayController = controller
+                            } else {
+                                NSPasteboard.general.clearContents()
+                                guard NSPasteboard.general.setString(text, forType: .string) else {
+                                    throw CaptureError.clipboardUnavailable
+                                }
+                                self.showFeedback("Text copied", on: screen)
+                            }
+                        } else {
+                            NSPasteboard.general.clearContents()
+                            guard NSPasteboard.general.setString(result.string, forType: .string) else {
+                                throw CaptureError.clipboardUnavailable
+                            }
+                            self.showFeedback("Text copied", on: screen)
+                        }
+                    } else {
+                        NSPasteboard.general.clearContents()
+                        guard NSPasteboard.general.setString(result.string, forType: .string) else {
+                            throw CaptureError.clipboardUnavailable
+                        }
+                        switch result {
+                        case .text:
+                            self.showFeedback("Text copied", on: screen)
+                        case .qrCode:
+                            self.showFeedback("QR code copied", on: screen)
+                        }
                     }
                 } catch {
                     self.showError(error.localizedDescription)

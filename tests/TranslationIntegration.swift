@@ -18,6 +18,32 @@ import Translation
         Task { await verify() }
     }
     private func verify() async {
+        guard let screen = NSScreen.main else { fail("No display available") }
+        let visible = screen.visibleFrame
+        for size in [CGSize(width: 28, height: 18), CGSize(width: 440, height: 180), CGSize(width: 200, height: 500)] {
+            let selected = CGRect(x: visible.midX - size.width / 2, y: visible.midY - size.height / 2,
+                                  width: size.width, height: size.height)
+            let controller = TranslationOverlayController()
+            controller.show(originalText: "Bonjour, comment allez-vous aujourd’hui ?", selectionBounds: selected,
+                screen: screen, targetLanguageIdentifier: "en", onTargetChange: { _ in })
+            controller.window?.contentView?.layoutSubtreeIfNeeded()
+            guard controller.window?.frame == selected,
+                  controller.window?.contentView?.bounds.size == selected.size,
+                  let toolbar = controller.toolbarWindow, toolbar.isVisible,
+                  !toolbar.frame.intersects(selected) else { fail("Overlay changed the selected size or controls cover the content") }
+            let content = controller.window
+            controller.close()
+            guard controller.window == nil, controller.toolbarWindow == nil,
+                  content?.isVisible == false, !toolbar.isVisible else { fail("Closing must dismiss content and toolbar") }
+        }
+        let externalScreen = CGRect(x: -1600, y: -200, width: 1600, height: 1000)
+        for selection in [CGRect(x: -1500, y: 100, width: 40, height: 20),
+                          CGRect(x: -1000, y: 740, width: 300, height: 60)] {
+            let layout = TranslationOverlayLayout(selection: selection, visibleFrame: externalScreen)
+            guard layout.contentFrame == selection, externalScreen.contains(layout.toolbarFrame),
+                  !selection.intersects(layout.toolbarFrame) else { fail("Screen edge toolbar positioning failed") }
+        }
+        print("PASS: exact content frames for small, wide, and tall selections; separate visible toolbar; screen edges; both windows close")
         let availability = LanguageAvailability()
         for target in ["en", "es"] {
             guard await availability.status(from: Locale.Language(identifier: "fr"),

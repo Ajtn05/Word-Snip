@@ -30,9 +30,11 @@ final class SelectionOverlay {
     private var windows: [NSWindow] = []
     private var finished = false
     private let mode: SelectionMode
+    private let translate: Bool
 
-    init(mode: SelectionMode) {
+    init(mode: SelectionMode, translate: Bool) {
         self.mode = mode
+        self.translate = translate
     }
 
     func show() {
@@ -47,7 +49,8 @@ final class SelectionOverlay {
             window.hasShadow = false
             window.ignoresMouseEvents = false
             window.acceptsMouseMovedEvents = true
-            let view = SelectionView(frame: CGRect(origin: .zero, size: screen.frame.size), mode: mode)
+            let view = SelectionView(frame: CGRect(origin: .zero, size: screen.frame.size),
+                                     mode: mode, translate: translate)
             view.onSelection = { [weak self, weak window] area in
                 guard let self, let window, !self.finished else { return }
                 self.finished = true
@@ -114,14 +117,30 @@ private final class SelectionView: NSView {
     private let mode: SelectionMode
     private let hintText: NSAttributedString
 
-    init(frame: CGRect, mode: SelectionMode) {
+    init(frame: CGRect, mode: SelectionMode, translate: Bool) {
         self.mode = mode
-        hintText = NSAttributedString(
-            string: mode == .freehand
-                ? "Draw around text or a QR code  ·  Esc to cancel"
-                : "Drag to select text or a QR code  ·  Esc to cancel",
+        let instruction: String
+        if translate {
+            instruction = "Drag over text to translate"
+        } else if mode == .freehand {
+            instruction = "Draw around text or a QR code"
+        } else {
+            instruction = "Drag to select text or a QR code"
+        }
+        let hint = NSMutableAttributedString()
+        if translate, let globe = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)?
+            .withSymbolConfiguration(.init(paletteColors: [.white])) {
+            let icon = NSTextAttachment()
+            icon.image = globe
+            icon.bounds = CGRect(x: 0, y: -2, width: 13, height: 13)
+            hint.append(NSAttributedString(attachment: icon))
+        }
+        let leadingSpace = hint.length > 0 ? "  " : ""
+        hint.append(NSAttributedString(
+            string: "\(leadingSpace)\(instruction)  ·  Esc to cancel",
             attributes: [.font: NSFont.systemFont(ofSize: 12, weight: .medium), .foregroundColor: NSColor.white]
-        )
+        ))
+        hintText = hint
         super.init(frame: frame)
     }
 

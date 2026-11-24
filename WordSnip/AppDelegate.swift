@@ -160,7 +160,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         isCapturing = true
         settingsWindow?.orderOut(nil)
-        let overlay = SelectionOverlay(mode: mode)
+        let overlay = SelectionOverlay(mode: mode, translate: translate)
         overlay.onCancel = { [weak self] in
             self?.overlay = nil
             self?.isCapturing = false

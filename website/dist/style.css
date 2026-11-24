@@ -207,11 +207,12 @@ h3 { font-size: 1.27rem; line-height: 1.3; letter-spacing: -.035em; }
 figcaption { margin-top: .7rem; color: var(--muted); font-size: .88rem; text-align: center; }
 
 .capture-section { padding-block: clamp(3.25rem, 7.25vw, 6rem); }
-.capture-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin-top: clamp(1.1rem, 3vw, 1.9rem); }
+.capture-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: clamp(1.1rem, 3vw, 1.9rem); }
 .capture-option { padding: clamp(1.25rem, 2.7vw, 1.85rem); border-radius: 1.15rem; }
 .rectangle-option { background: #e4efff; }
 .freehand-option { background: #dff4f5; }
 .qr-option { background: #eceffb; }
+.translation-option { background: #e4efff; }
 .capture-option kbd {
   display: inline-block;
   margin-bottom: .65rem;

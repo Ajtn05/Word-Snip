@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Copy text and QR codes from anywhere on your Mac with Word Snip. Free and open source for macOS 14 and later.">
+  <meta name="description" content="Copy text, scan QR links, or translate a selected area of your Mac screen with Word Snip. Free and open source for macOS 14 and later.">
   <meta property="og:title" content="Word Snip">
-  <meta property="og:description" content="Select text or a QR code on your Mac and paste it wherever you need it.">
-  <title>Word Snip | Copy what’s on your screen</title>
+  <meta property="og:description" content="Copy text, preview or open QR links, and translate selected text in an overlay.">
+  <title>Word Snip | Copy or translate what’s on your screen</title>
   <link rel="icon" href="assets/word-snip.png" type="image/png">
   <link rel="stylesheet" href="style.css">
   <script src="preview.js" defer></script>
@@ -29,13 +29,13 @@
   <main>
     <section class="wrap hero" aria-labelledby="hero-title">
       <div class="hero-copy">
-        <h1 id="hero-title">Copy what’s on your screen.</h1>
-        <p>Grab a line from a lecture slide, a quote from an image, or a link from a QR code. Draw around it and Word Snip copies it to your clipboard.</p>
+        <h1 id="hero-title">Copy or translate what’s on your screen.</h1>
+        <p>Grab a line from a lecture slide, a quote from an image, or a link from a QR code. Draw around it to copy, or enable translation to read it in another language.</p>
         <div class="actions">
-          <a class="button button-primary" href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.8.0/Word-Snip-v1.8-macOS.zip">Download for macOS</a>
+          <a class="button button-primary" href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.9.0/Word-Snip-v1.9-macOS.zip">Download for macOS</a>
           <a class="button button-secondary" href="#capture">See how it works</a>
         </div>
-        <p class="platform">Free and open source <span aria-hidden="true">/</span> macOS 14 or later</p>
+        <p class="platform">Free and open source <span aria-hidden="true">/</span> macOS 14 or later. Translation requires macOS 15.</p>
       </div>
 
       <div class="preview-stage" aria-label="Interactive capture preview">
@@ -99,7 +99,7 @@
     </section>
 
     <section class="wrap capture-section" id="capture" aria-labelledby="capture-title">
-      <h2 id="capture-title">Select it. Paste it.</h2>
+      <h2 id="capture-title">Select it. Copy, open, or translate.</h2>
       <div class="capture-options">
         <article class="capture-option rectangle-option">
           <kbd aria-label="Control Shift 2">⌃⇧2</kbd>
@@ -113,8 +113,14 @@
         </article>
         <article class="capture-option qr-option">
           <h3>Scan a QR code</h3>
-          <p>Use either capture mode to enclose one full QR code. Paste its link or other contents from the clipboard.</p>
+          <p>Use either capture mode to enclose one full QR code. Its contents are always copied. In Settings → QR code action, choose Copy only, Preview link, or Open in browser to open web links immediately in your default browser.</p>
           <a href="https://github.com/Ajtn05/Word-Snip#scan-a-qr-code">See a QR capture</a>
+        </article>
+        <article class="capture-option translation-option">
+          <h3>Translate a selection</h3>
+          <p>Turn on <strong>Translate selected text</strong> in Settings, then capture text with either shortcut. The source language is detected automatically and the target defaults to English.</p>
+          <p>The translation appears over your selection. Change the target language in the overlay to translate again, or use its X button to close it. Your target language is saved for next time.</p>
+          <p>Requires macOS 15 or later. Apple’s on-device translation may ask to download languages on first use.</p>
         </article>
       </div>
     </section>
@@ -122,11 +128,11 @@
     <section class="wrap download-section" id="download" aria-labelledby="download-title">
       <div>
         <h2 id="download-title">Get Word Snip</h2>
-        <p>Version 1.8.0 for Apple silicon and Intel Macs running macOS 14 or later.</p>
+        <p>Version 1.9.0 for Apple silicon and Intel Macs running macOS 14 or later. Translation overlays require macOS 15 or later.</p>
         <p>In Settings, turn on <strong>Collapse extra spaces</strong> to replace repeated spaces while keeping line breaks.</p>
         <div class="actions">
-          <a class="button button-primary" href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.8.0/Word-Snip-v1.8-macOS.zip">Download for macOS</a>
-          <a class="button button-secondary" href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.8.0">Release notes</a>
+          <a class="button button-primary" href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.9.0/Word-Snip-v1.9-macOS.zip">Download for macOS</a>
+          <a class="button button-secondary" href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.9.0">Release notes</a>
         </div>
       </div>
       <div class="install-instructions">

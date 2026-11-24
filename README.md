@@ -5,15 +5,15 @@
 
   <p>because my girlfriend asked for it...</p>
   <p>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.8.0"><img alt="Release v1.8.0" src="https://img.shields.io/badge/release-v1.8.0-2f6feb"></a>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.8.0/Word-Snip-v1.8-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.9.0"><img alt="Release v1.9.0" src="https://img.shields.io/badge/release-v1.9.0-2f6feb"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.9.0/Word-Snip-v1.9-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
     <img alt="Requires macOS 14 or newer" src="https://img.shields.io/badge/macOS-14%2B-555555">
     <img alt="Apple silicon and Intel" src="https://img.shields.io/badge/Macs-Apple%20silicon%20%2B%20Intel-555555">
   </p>
 
   <p><strong>Copy text and QR links from anywhere on your Mac with a rectangle or freehand selection.</strong></p>
-  <p>Select an area of your screen. Word Snip uses Apple Vision to recognize text in multiple languages or read a QR code, then copies the result to your clipboard.</p>
-  <p><a href="https://word-snip.velvetoats32.chatgpt.site">Product site</a> · <a href="#scan-a-qr-code">Scan a QR code</a> · <a href="#scan-text">Scan text</a> · <a href="#settings">Settings</a></p>
+  <p>Select an area of your screen. Word Snip recognizes text or reads a QR code and copies the result. Choose QR link previews or automatic browser opening, or enable translation to read selected text in an overlay (macOS 15+).</p>
+  <p><a href="https://word-snip.vercel.app">Product site</a> · <a href="#scan-a-qr-code">Scan a QR code</a> · <a href="#scan-text">Scan text</a> · <a href="#settings">Settings</a></p>
 </div>
 
 ## Scan a QR code
@@ -23,7 +23,7 @@
 3. When **QR code copied** appears, paste the code's contents, such as a link.
 
 <p align="center">
-  <a href="https://word-snip.velvetoats32.chatgpt.site">
+  <a href="https://word-snip.vercel.app">
     <img src="assets/word-snip-product-qr.png" alt="Word Snip selecting a QR code that opens the product site" width="560">
   </a>
 </p>
@@ -62,7 +62,7 @@ Turn on **Settings → Translate selected text** to translate a captured selecti
 
 Word Snip runs on Apple silicon and Intel Macs with macOS 14 or newer.
 
-1. [Download Word Snip 1.8 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.8.0/Word-Snip-v1.8-macOS.zip).
+1. [Download Word Snip 1.9 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.9.0/Word-Snip-v1.9-macOS.zip).
 2. Open the downloaded ZIP file, then drag `Word Snip.app` into your **Applications** folder.
 3. Open **Word Snip** from **Applications**.
 

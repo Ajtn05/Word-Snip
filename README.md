@@ -5,8 +5,8 @@
 
   <p>because my girlfriend asked for it...</p>
   <p>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.9.2"><img alt="Release v1.9.2" src="https://img.shields.io/badge/release-v1.9.2-2f6feb"></a>
-    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.9.2/Word-Snip-v1.9.2-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/tag/v1.9.3"><img alt="Release v1.9.3" src="https://img.shields.io/badge/release-v1.9.3-2f6feb"></a>
+    <a href="https://github.com/Ajtn05/Word-Snip/releases/download/v1.9.3/Word-Snip-v1.9.3-macOS.zip"><img alt="Download for macOS" src="https://img.shields.io/badge/macOS-download%20ZIP-3fb950?logo=apple&logoColor=white"></a>
     <img alt="Requires macOS 14 or newer" src="https://img.shields.io/badge/macOS-14%2B-555555">
     <img alt="Apple silicon and Intel" src="https://img.shields.io/badge/Macs-Apple%20silicon%20%2B%20Intel-555555">
   </p>
@@ -52,7 +52,7 @@ To set either capture shortcut, open Settings, click its current shortcut, then 
 
 For QR codes that contain web links, choose an action under **Settings → QR code action**: **Copy only** (default) keeps the current copy-only behavior; **Preview link** opens a small window with the full selectable URL and an **Open in default browser** button; **Open in browser** opens the link immediately. The link is always copied to the clipboard first. Only `http`/`https` links with a host use these actions; other QR payloads keep the usual **QR code copied** feedback.
 
-Press **⌃⇧5** to select an area for translation, or choose **Translate Selection** from the menu bar. Translation has its own configurable shortcut under **Settings → Translation shortcut**; rectangle and freehand capture continue copying text and scanning QR codes. The source language is detected automatically and the target defaults to English. The translation surface matches the selected area’s exact width, height, and position. A separate toolbar above it holds the target language menu and **X** button; near the top of the screen, the toolbar moves below the selection. The translated text is selectable and scrollable. Press **Esc** to close both the surface and toolbar. Changing the target retranslates the original capture and saves your preference. Translation uses Apple's on-device framework on macOS 15 or later; language downloads may require internet access and permission on first use. The shortcut and target control are disabled on macOS 14.
+Press **⌃⇧5** to select an area for translation, or choose **Translate Selection** from the menu bar. Translation has its own configurable shortcut under **Settings → Translation shortcut**; rectangle and freehand capture continue copying text and scanning QR codes. The source language is detected automatically and the target defaults to English. The translation surface matches the selected area’s exact width, height, and position. A compact toolbar above it holds the language menu and a dedicated **X** button. The toolbar moves below the selection near the top of the screen. For selections that fill the screen, the controls sit inside the overlay. The translated text is selectable and scrollable. Press **Esc** or click **X** to close the overlay. Changing the target retranslates the original capture and saves your preference. Translation uses Apple's on-device framework on macOS 15 or later; language downloads may require internet access and permission on first use. The shortcut and target control are disabled on macOS 14.
 
 <p align="center">
   <img src="assets/word-snip-settings-1.7.png" alt="Word Snip 1.7 Settings showing the Text language picker set to Automatic and both capture shortcuts" width="420">
@@ -62,7 +62,7 @@ Press **⌃⇧5** to select an area for translation, or choose **Translate Selec
 
 Word Snip runs on Apple silicon and Intel Macs with macOS 14 or newer.
 
-1. [Download Word Snip 1.9.2 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.9.2/Word-Snip-v1.9.2-macOS.zip).
+1. [Download Word Snip 1.9.3 for macOS](https://github.com/Ajtn05/Word-Snip/releases/download/v1.9.3/Word-Snip-v1.9.3-macOS.zip).
 2. Open the downloaded ZIP file, then drag `Word Snip.app` into your **Applications** folder.
 3. Open **Word Snip** from **Applications**.
 
@@ -99,4 +99,4 @@ You may use, modify, and redistribute Word Snip, including commercially, under G
 
 Versions previously released under the MIT License remain available under their original MIT terms. This change does not revoke those permissions.
 
-To verify native translation on a Mac with the French, English, and Spanish language models installed, run `./scripts/test-translation.sh`. This signed integration harness checks exact overlay dimensions for small, wide, and tall selections, separate toolbar placement, screen edges and close behavior, independent shortcut registration and collision rejection, OCR of a French image, automatic French-to-English translation through the production SwiftUI overlay, changing the target to Spanish, and same-language handling.
+To verify native translation on a Mac with the French, English, and Spanish language models installed, run `./scripts/test-translation.sh`. This signed integration harness checks exact overlay dimensions for small, wide, and tall selections, toolbar placement at screen edges and the visible close button, independent shortcut registration and collision rejection, OCR of a French image, automatic French-to-English translation through the production SwiftUI overlay, changing the target to Spanish, and same-language handling.

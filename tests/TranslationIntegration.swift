@@ -26,15 +26,23 @@ import Translation
             let controller = TranslationOverlayController()
             controller.show(originalText: "Bonjour, comment allez-vous aujourd’hui ?", selectionBounds: selected,
                 screen: screen, targetLanguageIdentifier: "en", onTargetChange: { _ in })
-            controller.window?.contentView?.layoutSubtreeIfNeeded()
-            guard controller.window?.frame == selected,
-                  controller.window?.contentView?.bounds.size == selected.size,
-                  let toolbar = controller.toolbarWindow, toolbar.isVisible,
-                  !toolbar.frame.intersects(selected) else { fail("Overlay changed the selected size or controls cover the content") }
-            let content = controller.window
-            controller.close()
-            guard controller.window == nil, controller.toolbarWindow == nil,
-                  content?.isVisible == false, !toolbar.isVisible else { fail("Closing must dismiss content and toolbar") }
+            guard let window = controller.window, let container = window.contentView,
+                  container.subviews.count == 2 else { fail("The toolbar and surface must share one panel") }
+            container.layoutSubtreeIfNeeded()
+            let surface = container.subviews[0]
+            let toolbar = container.subviews[1]
+            let surfaceOnScreen = window.convertToScreen(surface.convert(surface.bounds, to: nil))
+            let toolbarOnScreen = window.convertToScreen(toolbar.convert(toolbar.bounds, to: nil))
+            guard surfaceOnScreen == selected, visible.contains(toolbarOnScreen),
+                  toolbarOnScreen.minY >= selected.maxY else { fail("Overlay changed the selection or controls overlap it") }
+            guard let close = closeButton(in: toolbar), !close.isHiddenOrHasHiddenAncestor, close.isEnabled,
+                  close.image?.isValid == true else { fail("The toolbar must have a visible X button") }
+            let closeFrame = window.convertToScreen(close.convert(close.bounds, to: nil))
+            guard toolbarOnScreen.contains(closeFrame), closeFrame.width >= 26,
+                  closeFrame.height >= 26 else { fail("The language menu must leave room for the X button") }
+            close.performClick(nil)
+            await Task.yield()
+            guard controller.window == nil, !window.isVisible else { fail("The close button must dismiss the whole overlay") }
         }
         let externalScreen = CGRect(x: -1600, y: -200, width: 1600, height: 1000)
         for selection in [CGRect(x: -1500, y: 100, width: 40, height: 20),
@@ -43,7 +51,12 @@ import Translation
             guard layout.contentFrame == selection, externalScreen.contains(layout.toolbarFrame),
                   !selection.intersects(layout.toolbarFrame) else { fail("Screen edge toolbar positioning failed") }
         }
-        print("PASS: exact content frames for small, wide, and tall selections; separate visible toolbar; screen edges; both windows close")
+        let fullScreen = TranslationOverlayLayout(selection: externalScreen, visibleFrame: externalScreen)
+        guard externalScreen.contains(fullScreen.toolbarFrame), fullScreen.toolbarInset > 0,
+              fullScreen.toolbarFrame.minY > externalScreen.maxY - fullScreen.toolbarInset else {
+            fail("A selection that fills the screen must leave room for the toolbar")
+        }
+        print("PASS: exact selection frames, screen-edge positioning, and visible, working close button")
         let availability = LanguageAvailability()
         for target in ["en", "es"] {
             guard await availability.status(from: Locale.Language(identifier: "fr"),
@@ -101,6 +114,14 @@ import Translation
         window.orderOut(nil)
         NSApp.terminate(nil)
     }
+
+    private func closeButton(in view: NSView) -> NSButton? {
+        if let button = view as? NSButton, button.accessibilityLabel() == "Close translation" {
+            return button
+        }
+        return view.subviews.lazy.compactMap { self.closeButton(in: $0) }.first
+    }
+
     private func waitForResult(_ model: TranslationOverlayModel, containing expected: String) async {
         for _ in 0..<300 {
             if let error = model.errorMessage { fail("Translation error: \(error)") }

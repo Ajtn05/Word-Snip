@@ -52,6 +52,8 @@ To set either capture shortcut, open Settings, click its current shortcut, then 
 
 For QR codes that contain web links, choose an action under **Settings → QR code action**: **Copy only** (default) keeps the current copy-only behavior; **Preview link** opens a small window with the full selectable URL and an **Open in default browser** button; **Open in browser** opens the link immediately. The link is always copied to the clipboard first. Only `http`/`https` links with a host use these actions; other QR payloads keep the usual **QR code copied** feedback.
 
+Turn on **Settings → Translate selected text** to translate a captured selection instead of copying it. Word Snip uses Apple's on-device Translation framework (requires macOS 15 or newer). The target defaults to English. Choose **Translation target** for the language to translate into; the source language is detected automatically and is independent of **Text language**. The floating overlay anchored to your selection shows the translation with an **X** close button, a target language picker, loading, error, and retry controls, and selectable translated text. Changing the target retranslates the original capture and saves your default target. Language models may need to download on first use; macOS may ask for permission or download the model, which can require an internet connection. On macOS 14, the translation setting is disabled and cleared.
+
 <p align="center">
   <img src="assets/word-snip-settings-1.7.png" alt="Word Snip 1.7 Settings showing the Text language picker set to Automatic and both capture shortcuts" width="420">
 </p>

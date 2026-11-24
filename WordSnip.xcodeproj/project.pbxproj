@@ -13,6 +13,7 @@
 		4B578F9F40A2C66190B236CA /* SelectionOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03D09E27E53E9C6DD00C7A25 /* SelectionOverlay.swift */; };
 		826E7FB60F90FA6220A94002 /* ShortcutManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EAA5D4B250CC61EC0750FF9 /* ShortcutManager.swift */; };
 		855F3A2779BF8BC2A58A9CC2 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92675110B8C46FEBF5221787 /* main.swift */; };
+		B0406B246F87DE18869F7CA5 /* TranslationOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C38C1CD61163BF85492D027 /* TranslationOverlay.swift */; };
 		E85F4A13700E99AD111F2F37 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 01D2F3BD5D2AEE7F2B68177F /* Assets.xcassets */; };
 		EB23BC7D1D42EDE681EC064A /* QRLinkPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = C66C88049BA286CB6CF2B50A /* QRLinkPreview.swift */; };
 		F6AF53585AE5F07D601FA26A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 017D5CB9BE1DACFA6FB3890F /* SettingsView.swift */; };
@@ -24,6 +25,7 @@
 		03D09E27E53E9C6DD00C7A25 /* SelectionOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionOverlay.swift; sourceTree = "<group>"; };
 		435CBE1CBBDEC8A90608C7F8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		52379C8BBB0A2CBE00E51220 /* QRCodeBehavior.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRCodeBehavior.swift; sourceTree = "<group>"; };
+		5C38C1CD61163BF85492D027 /* TranslationOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranslationOverlay.swift; sourceTree = "<group>"; };
 		92675110B8C46FEBF5221787 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		9EAA5D4B250CC61EC0750FF9 /* ShortcutManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShortcutManager.swift; sourceTree = "<group>"; };
 		C218E440195C31A8A4DB69A4 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -46,6 +48,7 @@
 				017D5CB9BE1DACFA6FB3890F /* SettingsView.swift */,
 				9EAA5D4B250CC61EC0750FF9 /* ShortcutManager.swift */,
 				C7B7CD4C44441BE30BEC22CE /* TextCapture.swift */,
+				5C38C1CD61163BF85492D027 /* TranslationOverlay.swift */,
 			);
 			path = WordSnip;
 			sourceTree = "<group>";
@@ -143,6 +146,7 @@
 				F6AF53585AE5F07D601FA26A /* SettingsView.swift in Sources */,
 				826E7FB60F90FA6220A94002 /* ShortcutManager.swift in Sources */,
 				36A2D52D37E4AB8B91101743 /* TextCapture.swift in Sources */,
+				B0406B246F87DE18869F7CA5 /* TranslationOverlay.swift in Sources */,
 				855F3A2779BF8BC2A58A9CC2 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -13,7 +13,7 @@ final class SettingsModel: ObservableObject {
     @Published var singleLineText: Bool
     @Published private(set) var collapseOCRSpaces: Bool
     @Published private(set) var recognitionLanguage: String?
-    @Published var translateSelectedText: Bool
+    @Published var translationShortcut = CaptureShortcut.defaultTranslation
     @Published var translationTargetLanguage: String
     @Published var qrCodeBehavior: QRCodeBehavior
     @Published var launchAtLogin: Bool
@@ -22,6 +22,7 @@ final class SettingsModel: ObservableObject {
 
     var onShortcutChange: ((CaptureShortcut) -> Bool)?
     var onFreehandShortcutChange: ((CaptureShortcut) -> Bool)?
+    var onTranslationShortcutChange: ((CaptureShortcut) -> Bool)?
     var onMenuBarChange: ((Bool) -> Void)?
 
     init() {
@@ -45,15 +46,14 @@ final class SettingsModel: ObservableObject {
         showMenuBarIcon = UserDefaults.standard.object(forKey: "showMenuBarIcon") as? Bool ?? true
         singleLineText = UserDefaults.standard.bool(forKey: "singleLineText")
         collapseOCRSpaces = UserDefaults.standard.bool(forKey: "collapseOCRSpaces")
+        UserDefaults.standard.removeObject(forKey: "translateSelectedText")
         if #available(macOS 15.0, *) {
-            translateSelectedText = UserDefaults.standard.bool(forKey: "translateSelectedText")
             if let saved = UserDefaults.standard.string(forKey: "translationTargetLanguage"), !saved.isEmpty {
                 translationTargetLanguage = saved
             } else {
                 translationTargetLanguage = "en"
             }
         } else {
-            translateSelectedText = false
             translationTargetLanguage = "en"
             UserDefaults.standard.removeObject(forKey: "translateSelectedText")
         }
@@ -68,6 +68,17 @@ final class SettingsModel: ObservableObject {
             recognitionLanguage = savedLanguage
         }
         launchAtLogin = SMAppService.mainApp.status == .enabled
+        if let data = UserDefaults.standard.data(forKey: "translationShortcut"),
+           let saved = try? JSONDecoder().decode(CaptureShortcut.self, from: data) {
+            translationShortcut = saved
+        } else {
+            let candidates: [CaptureShortcut] = [.defaultTranslation,
+                CaptureShortcut(keyCode: 22, modifiers: CaptureShortcut.defaultTranslation.modifiers, key: "6"),
+                CaptureShortcut(keyCode: 26, modifiers: CaptureShortcut.defaultTranslation.modifiers, key: "7")]
+            let rectangle = shortcut
+            let freehand = freehandShortcut
+            translationShortcut = candidates.first { !$0.matches(rectangle) && !$0.matches(freehand) } ?? .defaultTranslation
+        }
     }
 
     @discardableResult
@@ -136,14 +147,17 @@ final class SettingsModel: ObservableObject {
         UserDefaults.standard.set(value, forKey: "recognitionLanguage")
     }
 
-    func setTranslateSelectedText(_ value: Bool) {
-        if #available(macOS 15.0, *) {
-            translateSelectedText = value
-            UserDefaults.standard.set(value, forKey: "translateSelectedText")
-        } else {
-            translateSelectedText = false
-            UserDefaults.standard.removeObject(forKey: "translateSelectedText")
+    @discardableResult
+    func setTranslationShortcut(_ value: CaptureShortcut) -> Bool {
+        guard !value.isSettingsShortcut, let data = try? JSONEncoder().encode(value),
+              onTranslationShortcutChange?(value) == true else {
+            message = "That shortcut is unavailable. Choose a different combination."
+            return false
         }
+        translationShortcut = value
+        UserDefaults.standard.set(data, forKey: "translationShortcut")
+        message = nil
+        return true
     }
 
     func setTranslationTargetLanguage(_ value: String) {
@@ -178,6 +192,7 @@ struct SettingsView: View {
     @ObservedObject var model: SettingsModel
     var onCapture: () -> Void
     var onFreehandCapture: () -> Void
+    var onTranslate: () -> Void
     var onRecordingChange: (Bool) -> Void
     @State private var translationLanguages: [Locale.Language] = []
 
@@ -375,18 +390,26 @@ struct SettingsView: View {
                         HStack(spacing: 13) {
                             settingIcon("translate")
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Translate selected text").font(SettingsFont.demi(14))
-                                Text(translationAvailable ? "Auto-detect source language and show an overlay" : "Requires macOS 15 or later")
+                                Text("Translation shortcut").font(SettingsFont.demi(14))
+                                Text(translationAvailable ? "Select an area to translate · Auto → English by default" : "Requires macOS 15 or later")
                                     .font(SettingsFont.regular(11))
                                     .foregroundStyle(.secondary)
                             }
-                            Spacer()
-                            Toggle("Translate selected text", isOn: Binding(
-                                get: { model.translateSelectedText },
-                                set: { model.setTranslateSelectedText($0) }
-                            ))
-                            .labelsHidden()
-                            .tint(.gray)
+                            Spacer(minLength: 8)
+                            ShortcutRecorder(shortcut: model.translationShortcut, accessibilityLabel: "Translation shortcut",
+                                onShortcut: { model.setTranslationShortcut($0) },
+                                onInvalid: { model.rejectShortcut() },
+                                onRecordingChange: { recording in
+                                    model.isRecordingShortcut = recording
+                                    if recording { model.message = nil }
+                                    onRecordingChange(recording)
+                                })
+                                .frame(width: 120, height: 36)
+                                .disabled(!translationAvailable)
+                            Button(action: onTranslate) {
+                                Image(systemName: "viewfinder")
+                            }
+                            .help("Select an area to translate")
                             .disabled(!translationAvailable)
                         }
                         .padding(.vertical, 11)
@@ -413,7 +436,7 @@ struct SettingsView: View {
                             .labelsHidden()
                             .pickerStyle(.menu)
                             .frame(width: 180, alignment: .trailing)
-                            .disabled(!translationAvailable || !model.translateSelectedText)
+                            .disabled(!translationAvailable)
                         }
                         .padding(.vertical, 11)
 

@@ -13,6 +13,14 @@ struct CaptureShortcut: Codable, Equatable {
     static let alternateFreehand = CaptureShortcut(keyCode: UInt32(kVK_ANSI_4),
                                                   modifiers: UInt32(controlKey | shiftKey), key: "4")
 
+    static let defaultTranslation = CaptureShortcut(keyCode: UInt32(kVK_ANSI_5),
+                                                     modifiers: UInt32(controlKey | shiftKey), key: "5")
+
+    func matches(_ other: CaptureShortcut?) -> Bool {
+        guard let other else { return false }
+        return keyCode == other.keyCode && modifiers == other.modifiers
+    }
+
     static func legacyPreset(_ value: Int) -> CaptureShortcut? {
         switch value {
         case 0: .default
@@ -91,11 +99,14 @@ struct CaptureShortcut: Codable, Equatable {
 final class ShortcutManager {
     var onCapture: (() -> Void)?
     var onFreehandCapture: (() -> Void)?
+    var onTranslation: (() -> Void)?
     var onSettings: (() -> Void)?
     private var captureHotKey: EventHotKeyRef?
     private var currentShortcut: CaptureShortcut?
     private var freehandHotKey: EventHotKeyRef?
     private var currentFreehandShortcut: CaptureShortcut?
+    private var translationHotKey: EventHotKeyRef?
+    private var currentTranslationShortcut: CaptureShortcut?
     private var settingsHotKey: EventHotKeyRef?
     private var eventHandler: EventHandlerRef?
 
@@ -112,6 +123,7 @@ final class ShortcutManager {
             case 1: manager.onCapture?()
             case 2: manager.onSettings?()
             case 3: manager.onFreehandCapture?()
+            case 4: manager.onTranslation?()
             default: break
             }
             return noErr
@@ -125,13 +137,14 @@ final class ShortcutManager {
     deinit {
         if let captureHotKey { UnregisterEventHotKey(captureHotKey) }
         if let freehandHotKey { UnregisterEventHotKey(freehandHotKey) }
+        if let translationHotKey { UnregisterEventHotKey(translationHotKey) }
         if let settingsHotKey { UnregisterEventHotKey(settingsHotKey) }
         if let eventHandler { RemoveEventHandler(eventHandler) }
     }
 
     @discardableResult
     func registerCapture(_ shortcut: CaptureShortcut) -> Bool {
-        guard !shortcut.isSettingsShortcut, shortcut != currentFreehandShortcut else { return false }
+        guard !shortcut.isSettingsShortcut, !shortcut.matches(currentFreehandShortcut), !shortcut.matches(currentTranslationShortcut) else { return false }
         if shortcut == currentShortcut, captureHotKey != nil { return true }
         let previous = currentShortcut
         if let captureHotKey { UnregisterEventHotKey(captureHotKey) }
@@ -152,7 +165,7 @@ final class ShortcutManager {
 
     @discardableResult
     func registerFreehand(_ shortcut: CaptureShortcut) -> Bool {
-        guard !shortcut.isSettingsShortcut, shortcut != currentShortcut else { return false }
+        guard !shortcut.isSettingsShortcut, !shortcut.matches(currentShortcut), !shortcut.matches(currentTranslationShortcut) else { return false }
         if shortcut == currentFreehandShortcut, freehandHotKey != nil { return true }
         let previous = currentFreehandShortcut
         if let freehandHotKey { UnregisterEventHotKey(freehandHotKey) }
@@ -169,6 +182,28 @@ final class ShortcutManager {
     private func installFreehand(_ shortcut: CaptureShortcut) -> Bool {
         let id = EventHotKeyID(signature: fourCharCode("WSNP"), id: 3)
         return RegisterEventHotKey(shortcut.keyCode, shortcut.modifiers, id, GetApplicationEventTarget(), 0, &freehandHotKey) == noErr
+    }
+
+    @discardableResult
+    func registerTranslation(_ shortcut: CaptureShortcut) -> Bool {
+        guard !shortcut.isSettingsShortcut, !shortcut.matches(currentShortcut),
+              !shortcut.matches(currentFreehandShortcut) else { return false }
+        if shortcut == currentTranslationShortcut, translationHotKey != nil { return true }
+        let previous = currentTranslationShortcut
+        if let translationHotKey { UnregisterEventHotKey(translationHotKey) }
+        translationHotKey = nil
+        if installTranslation(shortcut) {
+            currentTranslationShortcut = shortcut
+            return true
+        }
+        if let previous, installTranslation(previous) { currentTranslationShortcut = previous }
+        else { currentTranslationShortcut = nil }
+        return false
+    }
+
+    private func installTranslation(_ shortcut: CaptureShortcut) -> Bool {
+        let id = EventHotKeyID(signature: fourCharCode("WSNP"), id: 4)
+        return RegisterEventHotKey(shortcut.keyCode, shortcut.modifiers, id, GetApplicationEventTarget(), 0, &translationHotKey) == noErr
     }
 
     private func fourCharCode(_ value: String) -> OSType {

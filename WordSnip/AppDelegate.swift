@@ -27,6 +27,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self, !self.isRecordingShortcut else { return }
             self.startCapture(mode: .freehand)
         }
+        shortcutManager.onTranslation = { [weak self] in
+            guard let self, !self.isRecordingShortcut else { return }
+            self.startCapture(mode: .rectangle, translate: true)
+        }
+        settingsModel.onTranslationShortcutChange = { [weak self] shortcut in
+            self?.shortcutManager.registerTranslation(shortcut) ?? false
+        }
         shortcutManager.onSettings = { [weak self] in self?.showSettings() }
         settingsModel.onShortcutChange = { [weak self] shortcut in
             self?.shortcutManager.registerCapture(shortcut) ?? false
@@ -40,7 +47,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         configureStatusItem(visible: settingsModel.showMenuBarIcon)
         let rectangleRegistered = shortcutManager.registerCapture(settingsModel.shortcut)
         let freehandRegistered = shortcutManager.registerFreehand(settingsModel.freehandShortcut)
-        if !rectangleRegistered || !freehandRegistered {
+        var translationRegistered = true
+        if #available(macOS 15.0, *) {
+            translationRegistered = shortcutManager.registerTranslation(settingsModel.translationShortcut)
+        }
+        if !rectangleRegistered || !freehandRegistered || !translationRegistered {
             settingsModel.message = "A capture shortcut is unavailable. Choose another combination."
             showSettings()
         } else if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
@@ -62,6 +73,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(withTitle: "Capture Rectangle", action: #selector(captureFromMenu), keyEquivalent: "")
         menu.addItem(withTitle: "Capture Freehand", action: #selector(freehandFromMenu), keyEquivalent: "")
+        if #available(macOS 15.0, *) {
+            menu.addItem(withTitle: "Translate Selection", action: #selector(translateFromMenu), keyEquivalent: "")
+        }
         menu.addItem(withTitle: "Settings…", action: #selector(settingsFromMenu), keyEquivalent: "")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Word Snip", action: #selector(quitFromMenu), keyEquivalent: "")
@@ -72,6 +86,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func captureFromMenu() { scheduleCaptureFromUI(mode: .rectangle) }
     @objc private func freehandFromMenu() { scheduleCaptureFromUI(mode: .freehand) }
+    @objc private func translateFromMenu() {
+        isRecordingShortcut = false
+        scheduleCaptureFromUI(mode: .rectangle, translate: true)
+    }
     @objc private func settingsFromMenu() { showSettings() }
     @objc private func quitFromMenu() { NSApp.terminate(nil) }
 
@@ -90,6 +108,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.captureFromSettings(mode: .rectangle)
             }, onFreehandCapture: { [weak self] in
                 self?.captureFromSettings(mode: .freehand)
+            }, onTranslate: { [weak self] in
+                self?.translateFromMenu()
             }, onRecordingChange: { [weak self] recording in
                 self?.isRecordingShortcut = recording
             }))
@@ -116,14 +136,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         scheduleCaptureFromUI(mode: mode)
     }
 
-    private func scheduleCaptureFromUI(mode: SelectionMode) {
+    private func scheduleCaptureFromUI(mode: SelectionMode, translate: Bool = false) {
         // Let the button or menu finish tracking its mouse click before opening a full-screen panel.
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(150)) { [weak self] in
-            self?.startCapture(mode: mode)
+            self?.startCapture(mode: mode, translate: translate)
         }
     }
 
-    private func startCapture(mode: SelectionMode) {
+    private func startCapture(mode: SelectionMode, translate: Bool = false) {
         if let overlay {
             overlay.close()
             self.overlay = nil
@@ -152,7 +172,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 // Let WindowServer remove the selection overlay before taking the screenshot.
                 try? await Task.sleep(for: .milliseconds(180))
                 do {
-                    let translateMode = self.settingsModel.translateSelectedText
+                    let translateMode = translate
                     let result = try await TextCapture.recognize(
                         screen: screen, selection: selection, singleLine: self.settingsModel.singleLineText,
                         collapseSpaces: self.settingsModel.collapseOCRSpaces,
@@ -258,7 +278,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func showError(_ message: String) {
         let alert = NSAlert()
-        alert.messageText = "Could not copy selection"
+        alert.messageText = "Could not capture selection"
         alert.informativeText = message
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()

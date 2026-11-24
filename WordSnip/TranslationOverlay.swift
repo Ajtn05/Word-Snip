@@ -15,6 +15,9 @@ import _Translation_SwiftUI
 final class TranslationOverlayModel: ObservableObject {
     let originalText: String
     @Published var targetLanguage: Locale.Language
+    @Published var translatedText = ""
+    @Published var isLoading = true
+    @Published var errorMessage: String?
     @Published var supportedLanguages: [Locale.Language] = []
     var onTargetChange: (String) -> Void
 
@@ -30,43 +33,41 @@ struct TranslationOverlayView: View {
     @ObservedObject var model: TranslationOverlayModel
     let onClose: () -> Void
 
-    @State private var translatedText: String = ""
-    @State private var isLoading: Bool = true
-    @State private var errorMessage: String? = nil
     @State private var configuration: TranslationSession.Configuration?
     @State private var generation: Int = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
+                Image(systemName: "translate")
+                    .foregroundStyle(.secondary)
                 Picker("Target language", selection: $model.targetLanguage) {
                     ForEach(displayedLanguages, id: \.self) { language in
                         Text(displayName(language)).tag(language)
                     }
                 }
                 .pickerStyle(.menu)
-                .frame(maxWidth: 220)
+                .labelsHidden()
+                .fixedSize()
+                .accessibilityLabel("Translate into")
 
                 Spacer()
-
-                if isLoading {
-                    ProgressView()
-                        .controlSize(.small)
-                }
 
                 Button(action: onClose) {
                     Image(systemName: "xmark")
                         .font(.system(size: 12, weight: .semibold))
                 }
                 .buttonStyle(.borderless)
-                .help("Close")
+                .help("Close translation")
+                .accessibilityLabel("Close translation")
+                .keyboardShortcut(.cancelAction)
+                .frame(width: 26, height: 26)
+                .background(.quaternary, in: Circle())
             }
-
-            Divider()
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
-                    if isLoading && translatedText.isEmpty && errorMessage == nil {
+                    if model.isLoading && model.translatedText.isEmpty && model.errorMessage == nil {
                         HStack(spacing: 8) {
                             ProgressView()
                                 .controlSize(.small)
@@ -75,7 +76,7 @@ struct TranslationOverlayView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 4)
-                    } else if let errorMessage {
+                    } else if let errorMessage = model.errorMessage {
                         Text(errorMessage)
                             .foregroundStyle(.red)
                             .textSelection(.enabled)
@@ -83,7 +84,7 @@ struct TranslationOverlayView: View {
                             retryTranslation()
                         }
                     } else {
-                        Text(translatedText.isEmpty ? model.originalText : translatedText)
+                        Text(model.translatedText.isEmpty ? model.originalText : model.translatedText)
                             .textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -91,9 +92,10 @@ struct TranslationOverlayView: View {
                 .padding(4)
             }
         }
-        .padding(12)
-        .frame(minWidth: 220, minHeight: 140)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .padding(16)
+        .frame(minWidth: 300, minHeight: 160)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(.primary.opacity(0.08)))
         .task {
             if configuration == nil {
                 configuration = TranslationSession.Configuration(source: nil, target: model.targetLanguage)
@@ -103,9 +105,9 @@ struct TranslationOverlayView: View {
         .onChange(of: model.targetLanguage) { _, newValue in
             generation += 1
             configuration = TranslationSession.Configuration(source: nil, target: newValue)
-            isLoading = true
-            errorMessage = nil
-            translatedText = ""
+            model.isLoading = true
+            model.errorMessage = nil
+            model.translatedText = ""
             model.onTargetChange(newValue.minimalIdentifier)
         }
         .translationTask(configuration) { session in
@@ -113,8 +115,8 @@ struct TranslationOverlayView: View {
             let currentGeneration = generation + 1
             await MainActor.run {
                 generation = currentGeneration
-                isLoading = true
-                errorMessage = nil
+                model.isLoading = true
+                model.errorMessage = nil
             }
             do {
                 let recognizer = NLLanguageRecognizer()
@@ -123,29 +125,30 @@ struct TranslationOverlayView: View {
                    Locale.Language(identifier: source.rawValue).languageCode == requestedTarget.languageCode {
                     guard !Task.isCancelled, generation == currentGeneration,
                           model.targetLanguage == requestedTarget else { return }
-                    translatedText = model.originalText
-                    isLoading = false
+                    model.translatedText = model.originalText
+                    model.isLoading = false
                     return
                 }
-                try await session.prepareTranslation()
+                // translate(_:) detects the source from text and handles download prompts.
+                // prepareTranslation() cannot detect a nil source and always throws here.
                 let response = try await session.translate(model.originalText)
                 await MainActor.run {
                     guard !Task.isCancelled, generation == currentGeneration,
                           model.targetLanguage == requestedTarget else { return }
                     if response.sourceLanguage == response.targetLanguage {
-                        translatedText = model.originalText
+                        model.translatedText = model.originalText
                     } else {
-                        translatedText = response.targetText
+                        model.translatedText = response.targetText
                     }
-                    isLoading = false
-                    errorMessage = nil
+                    model.isLoading = false
+                    model.errorMessage = nil
                 }
             } catch {
                 await MainActor.run {
                     guard !Task.isCancelled, generation == currentGeneration,
                           model.targetLanguage == requestedTarget else { return }
-                    errorMessage = error.localizedDescription
-                    isLoading = false
+                    model.errorMessage = error.localizedDescription
+                    model.isLoading = false
                 }
             }
         }
@@ -176,8 +179,8 @@ struct TranslationOverlayView: View {
 
     private func retryTranslation() {
         generation += 1
-        isLoading = true
-        errorMessage = nil
+        model.isLoading = true
+        model.errorMessage = nil
         configuration?.invalidate()
     }
 }
@@ -196,8 +199,8 @@ final class TranslationOverlayController {
         self.model = newModel
 
         let usable = screen.visibleFrame
-        let minWidth: CGFloat = 220
-        let minHeight: CGFloat = 140
+        let minWidth: CGFloat = 300
+        let minHeight: CGFloat = 160
         let width = min(max(selectionBounds.width, minWidth), usable.width)
         let height = min(max(selectionBounds.height, minHeight), usable.height)
 
@@ -209,6 +212,7 @@ final class TranslationOverlayController {
         let panel = TranslationPanel(contentRect: CGRect(x: originX, y: originY, width: width, height: height),
                             styleMask: [.borderless, .resizable],
                             backing: .buffered, defer: false)
+        panel.isReleasedWhenClosed = false
         panel.isFloatingPanel = true
         panel.level = .floating
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]

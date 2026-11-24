@@ -15,6 +15,7 @@ final class SettingsModel: ObservableObject {
     @Published private(set) var recognitionLanguage: String?
     @Published var translateSelectedText: Bool
     @Published var translationTargetLanguage: String
+    @Published var qrCodeBehavior: QRCodeBehavior
     @Published var launchAtLogin: Bool
     @Published var message: String?
     @Published var isRecordingShortcut = false
@@ -55,6 +56,12 @@ final class SettingsModel: ObservableObject {
             translateSelectedText = false
             translationTargetLanguage = "en"
             UserDefaults.standard.removeObject(forKey: "translateSelectedText")
+        }
+        if let raw = UserDefaults.standard.string(forKey: "qrCodeBehavior"),
+           let saved = QRCodeBehavior(rawValue: raw) {
+            qrCodeBehavior = saved
+        } else {
+            qrCodeBehavior = .copyOnly
         }
         if let savedLanguage = UserDefaults.standard.string(forKey: "recognitionLanguage"),
            TextCapture.supportedRecognitionLanguages.contains(savedLanguage) {
@@ -142,6 +149,11 @@ final class SettingsModel: ObservableObject {
     func setTranslationTargetLanguage(_ value: String) {
         translationTargetLanguage = value
         UserDefaults.standard.set(value, forKey: "translationTargetLanguage")
+    }
+
+    func setQRCodeBehavior(_ value: QRCodeBehavior) {
+        qrCodeBehavior = value
+        UserDefaults.standard.set(value.rawValue, forKey: "qrCodeBehavior")
     }
 
     func setLaunchAtLogin(_ value: Bool) {
@@ -330,6 +342,31 @@ struct SettingsView: View {
                             .labelsHidden()
                             .tint(.gray)
                             .disabled(model.singleLineText)
+                        }
+                        .padding(.vertical, 11)
+
+                        Divider().padding(.leading, 43)
+
+                        HStack(spacing: 13) {
+                            settingIcon("qrcode")
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("QR code action").font(SettingsFont.demi(14))
+                                Text("What to do after copying a scanned web link")
+                                    .font(SettingsFont.regular(11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 8)
+                            Picker("QR code action", selection: Binding(
+                                get: { model.qrCodeBehavior },
+                                set: { model.setQRCodeBehavior($0) }
+                            )) {
+                                ForEach(QRCodeBehavior.allCases, id: \.self) { behavior in
+                                    Text(behavior.title).tag(behavior)
+                                }
+                            }
+                            .labelsHidden()
+                            .pickerStyle(.menu)
+                            .frame(width: 180, alignment: .trailing)
                         }
                         .padding(.vertical, 11)
 

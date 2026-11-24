@@ -8,6 +8,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let shortcutManager = ShortcutManager()
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
+    private lazy var qrLinkPreviewController: QRLinkPreviewController = {
+        let controller = QRLinkPreviewController()
+        controller.onOpen = { [weak self] url in self?.openScannedURL(url) }
+        return controller
+    }()
     private var overlay: SelectionOverlay?
     private var isCapturing = false
     private var isRecordingShortcut = false
@@ -148,8 +153,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                         throw CaptureError.clipboardUnavailable
                     }
                     switch result {
-                    case .text: self.showFeedback("Text copied", on: screen)
-                    case .qrCode: self.showFeedback("QR code copied", on: screen)
+                    case .text:
+                        self.showFeedback("Text copied", on: screen)
+                    case .qrCode(let payload):
+                        self.showFeedback("QR code copied", on: screen)
+                        if let url = self.scannedWebURL(from: payload) {
+                            switch self.settingsModel.qrCodeBehavior {
+                            case .copyOnly:
+                                break
+                            case .preview:
+                                self.qrLinkPreviewController.show(url: url)
+                            case .openBrowser:
+                                self.openScannedURL(url)
+                            }
+                        }
                     }
                 } catch {
                     self.showError(error.localizedDescription)
@@ -159,6 +176,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         self.overlay = overlay
         overlay.show()
+    }
+
+    private func scannedWebURL(from payload: String) -> URL? {
+        let trimmed = payload.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let url = URL(string: trimmed),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              let host = url.host, !host.isEmpty else {
+            return nil
+        }
+        return url
+    }
+
+    private func openScannedURL(_ url: URL) {
+        if !NSWorkspace.shared.open(url) {
+            self.showError("Could not open \(url.absoluteString) in your default browser.")
+        }
     }
 
     private func showPermissionAlert() {

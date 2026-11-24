@@ -50,6 +50,8 @@ For addresses and lists, turn off **Single-line text** and turn on **Collapse ex
 
 To set either capture shortcut, open Settings, click its current shortcut, then press a key with **Command**, **Control**, or **Option**. Press **Esc** to cancel recording. If another app or the other capture mode already uses that combination, Word Snip keeps your previous shortcut.
 
+For QR codes that contain web links, choose an action under **Settings → QR code action**: **Copy only** (default) keeps the current copy-only behavior; **Preview link** opens a small window with the full selectable URL and an **Open in default browser** button; **Open in browser** opens the link immediately. The link is always copied to the clipboard first. Only `http`/`https` links with a host use these actions; other QR payloads keep the usual **QR code copied** feedback.
+
 <p align="center">
   <img src="assets/word-snip-settings-1.7.png" alt="Word Snip 1.7 Settings showing the Text language picker set to Automatic and both capture shortcuts" width="420">
 </p>
